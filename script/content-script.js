@@ -168,9 +168,10 @@
                 const match = id.match(/skip-button:(\d+)/);
                 if (match) {
                     console.log("找到跳過按鈕",match[1]); // 例如 "21"
-                    let resBTN = document.getElementById(match[0])[0]; // 根據 ID 取得元素
-                    console.log("resBTN",resBTN);
-                    resBTN.click(); // 模擬點擊跳過按鈕
+                    let container = document.getElementById(match[0]); // 根據 ID 取得元素
+                    const btn = container.querySelector("button");
+                    console.log("跳過BTN",btn); // 確認是否找到按鈕
+                    //resBTN.click(); // 模擬點擊跳過按鈕
                     
                 }
 
