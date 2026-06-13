@@ -15,8 +15,13 @@
     const CLOSE_BTN_SEL = 'yt-live-chat-renderer #close-button, ytd-live-chat-frame #close-button, [aria-label="Close chat"], [aria-label="關閉聊天室"], yt-live-chat-renderer yt-icon-button#close-button, #chat:not([hidden]) yt-icon-button';
     let chatObserver = null;
     let chatTimer = null;
+    let lastChatHideTime = 0;
     const hideLiveChat = () => {
         if (!opts.hideChat) return;
+        // Avoid infinite loop
+        if (Date.now() - lastChatHideTime < 1000) return;
+        lastChatHideTime = Date.now();
+        
         const chat = document.querySelector('yt-live-chat-renderer, ytd-live-chat-frame, #chat, #chat-container, #live-chat, #chat-messages, yt-live-chat-frame');
         debug('hideLiveChat: chat found:', !!chat);
         if (!chat) return;
@@ -163,9 +168,10 @@
                 const match = id.match(/skip-button:(\d+)/);
                 if (match) {
                     console.log("找到跳過按鈕",match[1]); // 例如 "21"
-                    match[1].click(); // 模擬點擊跳過按鈕
+                    document.getElementById(match[0]).click(); // 模擬點擊跳過按鈕
+                    
                 }
-                
+
 
             if (t && t !== 'Skip ad' && t !== 'Skip' && t !== '略過') parts.push(t);
         }
