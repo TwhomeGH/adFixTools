@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-i18n="opts_title">SkipAds Settings</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:480px;margin:40px auto;padding:0 20px;background:#f5f5f5;color:#222}
+h1{font-size:20px}
+.card{background:#fff;border-radius:8px;padding:16px 20px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.row{display:flex;justify-content:space-between;align-items:center;padding:8px 0}
+.row+.row{border-top:1px solid #eee}
+.desc{font-size:12px;color:#666;margin-top:2px}
+select{padding:4px 8px;border:1px solid #ccc;border-radius:4px;font-size:14px}
+input[type=checkbox]{width:18px;height:18px}
+#save{width:100%;padding:10px;background:#AB5A5A;color:#fff;border:none;border-radius:6px;font-size:15px;cursor:pointer}
+#save:hover{background:#944a4a}
+#status{margin-top:12px;padding:8px;border-radius:4px;text-align:center;font-size:13px;display:none}
+#status.ok{display:block;background:#d4edda;color:#155724}
+</style>
+</head>
+<body>
+<h1 id="title"></h1>
+<div class="card">
+  <div class="row">
+    <div><label id="lbl_speed"></label><div class="desc" id="desc_speed"></div></div>
+    <select id="speed">
+      <option value="2" selected>2x</option><option value="4">4x</option>
+      <option value="8">8x</option><option value="16">16x</option>
+    </select>
+  </div>
+  <div class="row">
+    <div><label id="lbl_mute"></label><div class="desc" id="desc_mute"></div></div>
+    <input type="checkbox" id="muteAd" checked>
+  </div>
+  <div class="row">
+    <div><label id="lbl_toast"></label><div class="desc" id="desc_toast"></div></div>
+    <input type="checkbox" id="showNotification" checked>
+  </div>
+  <div class="row">
+    <div><label id="lbl_blockAds"></label><div class="desc" id="desc_blockAds"></div></div>
+    <input type="checkbox" id="blockHomeAds" checked>
+  </div>
+  <div class="row">
+    <div><label id="lbl_enabled"></label><div class="desc" id="desc_enabled"></div></div>
+    <input type="checkbox" id="enabled" checked>
+  </div>
+</div>
+<button id="save"></button>
+<div id="status"></div>
+<script src="options.js"></script>
+</body>
+</html>

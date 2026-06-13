@@ -1,0 +1,18 @@
+{
+    "name":             { "message": "SkipAds - YouTube 廣告跳過" },
+    "description":      { "message": "自動跳過 YouTube 廣告，支援自訂加速速度與首頁廣告封鎖" },
+    "toggleDesc":       { "message": "開關廣告跳過功能" },
+    "opts_title":       { "message": "設定" },
+    "opts_speed":       { "message": "廣告速度" },
+    "opts_speedDesc":   { "message": "廣告播放時的加速倍率" },
+    "opts_mute":        { "message": "靜音廣告" },
+    "opts_muteDesc":    { "message": "廣告期間自動靜音" },
+    "opts_toast":       { "message": "顯示通知" },
+    "opts_toastDesc":   { "message": "跳過廣告時顯示短暫通知" },
+    "opts_blockAds":    { "message": "封鎖首頁廣告" },
+    "opts_blockAdsDesc":{ "message": "隱藏 YouTube 首頁與搜尋結果的推廣內容" },
+    "opts_enabled":     { "message": "啟用" },
+    "opts_enabledDesc": { "message": "快捷鍵：Ctrl+Shift+X 切換開關" },
+    "opts_save":        { "message": "儲存" },
+    "opts_saved":       { "message": "已儲存" }
+}

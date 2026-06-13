@@ -1,0 +1,18 @@
+{
+    "name":             { "message": "SkipAds - YouTube Ad Skipper" },
+    "description":      { "message": "Automatically skips YouTube ads with customizable speed and homepage ad blocking" },
+    "toggleDesc":       { "message": "Toggle ad skipping on/off" },
+    "opts_title":       { "message": "Settings" },
+    "opts_speed":       { "message": "Ad speed" },
+    "opts_speedDesc":   { "message": "Playback speed during ads" },
+    "opts_mute":        { "message": "Mute ads" },
+    "opts_muteDesc":    { "message": "Auto-mute ad audio" },
+    "opts_toast":       { "message": "Show toast" },
+    "opts_toastDesc":   { "message": "Brief notification when ad is skipped" },
+    "opts_blockAds":    { "message": "Block homepage ads" },
+    "opts_blockAdsDesc":{ "message": "Hide promoted content on homepage & search" },
+    "opts_enabled":     { "message": "Enabled" },
+    "opts_enabledDesc": { "message": "Keyboard: Ctrl+Shift+X to toggle" },
+    "opts_save":        { "message": "Save" },
+    "opts_saved":       { "message": "Saved" }
+}

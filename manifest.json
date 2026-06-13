@@ -1,0 +1,41 @@
+{
+    "manifest_version": 3,
+    "name": "__MSG_name__",
+    "description": "__MSG_description__",
+    "version": "2.0",
+    "icons": {
+        "128": "icons/icon128.png"
+    },
+    "default_locale": "en",
+
+    "permissions": [
+        "storage"
+    ],
+    "host_permissions": [
+        "*://*.youtube.com/*"
+    ],
+    "content_scripts": [
+        {
+            "matches": ["*://*.youtube.com/*"],
+            "js": ["script/content-script.js"],
+            "run_at": "document_start",
+            "all_frames": true
+        }
+    ],
+    "background": {
+        "service_worker": "script/background.js"
+    },
+    "action": {},
+    "options_ui": {
+        "page": "options/options.html",
+        "open_in_tab": true
+    },
+    "commands": {
+        "toggle": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+X"
+            },
+            "description": "__MSG_toggleDesc__"
+        }
+    }
+}
