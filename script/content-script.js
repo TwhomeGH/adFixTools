@@ -128,6 +128,7 @@
             '.ytp-ad-badge-text',
             '.ytp-ad-player-overlay-text',
             '.ytp-ad-simple-ad-badge--survey'
+            
         ];
         const multiSels = [
             '.ytp-ad-badge__text--clean-player',
@@ -147,7 +148,7 @@
                 if (t && t !== 'Ad') parts.push(t);
             }
         }
-        const skipBtn = document.querySelector('.ytp-ad-skip-button, .ytp-skip-ad-button, .ytp-ad-skip-button-modern');
+        const skipBtn = document.querySelector('.ytp-ad-skip-button, .ytp-skip-ad-button, .ytp-ad-skip-button-modern .ytp-skip-ad-button');
         if (skipBtn) {
             const t = skipBtn.textContent.trim();
             if (t && t !== 'Skip ad' && t !== 'Skip' && t !== '略過') parts.push(t);
