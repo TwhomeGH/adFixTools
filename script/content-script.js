@@ -1,11 +1,12 @@
 (() => {
     'use strict';
 
-    let opts = { speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, enabled: true };
+    let opts = { speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, incrementalSpeed: false, enabled: true };
     let wasAd = false;
     let lastSkip = 0;
     let toastEl = null;
     let adTitle = '';
+    let adStartTime = 0;
 
     const AD_CSS = [
         'ytd-display-ad-renderer', 'ytd-statement-banner-renderer', 'ytd-ad-slot-renderer',
@@ -74,7 +75,27 @@
         return null;
     };
 
+    const collapseAdPanels = () => {
+        if (opts.collapsePanelAds === false) return;
+        for (const panel of document.querySelectorAll('ytd-engagement-panel-section-list-renderer')) {
+            if (panel.querySelector('panel-ad-header-image-lockup-view-model, .ytwAdBadgeViewModelHost')) {
+                const btn = panel.querySelector('toggle-button-view-model button');
+                if (btn && btn.getAttribute('aria-pressed') === 'true') {
+                    btn.click();
+                    console.log('[SkipAds] Collapsed ad panel');
+                }
+            }
+        }
+    };
+
+    const calcIncrementalSpeed = (elapsed) => {
+        const step = Math.floor(elapsed / 2);
+        if (step < 4) return 2 + step * 2;
+        return 8 + (step - 3) * 8;
+    };
+
     setInterval(() => {
+        collapseAdPanels();
         const p = document.querySelector('#movie_player');
         if (!p) return;
         const v = p.querySelector('video');
@@ -84,13 +105,19 @@
             if (isAd && v) {
                 if (!wasAd) {
                     adTitle = '';
+                    adStartTime = Date.now();
                     console.log('[SkipAds] Ad started');
                 }
                 if (!adTitle) {
                     adTitle = getAdTitle();
                     if (adTitle) console.log('[SkipAds] Title found:', adTitle);
                 }
-                v.playbackRate = opts.speed || 2;
+                if (opts.incrementalSpeed) {
+                    const elapsed = (Date.now() - adStartTime) / 1000;
+                    v.playbackRate = calcIncrementalSpeed(elapsed);
+                } else {
+                    v.playbackRate = opts.speed || 2;
+                }
                 if (opts.muteAd !== false) v.muted = true;
                 wasAd = true;
             }
@@ -119,7 +146,7 @@
     }, 300);
 
     chrome.storage.local.get({
-        speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, enabled: true
+        speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, incrementalSpeed: false, enabled: true
     }, (d) => {
         opts = d;
         if (opts.blockHomeAds) {

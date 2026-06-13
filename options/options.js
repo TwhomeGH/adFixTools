@@ -11,11 +11,15 @@ $('lbl_toast').textContent = i18n('opts_toast');
 $('desc_toast').textContent = i18n('opts_toastDesc');
 $('lbl_blockAds').textContent = i18n('opts_blockAds');
 $('desc_blockAds').textContent = i18n('opts_blockAdsDesc');
+$('lbl_collapsePanel').textContent = i18n('opts_collapsePanel');
+$('desc_collapsePanel').textContent = i18n('opts_collapsePanelDesc');
+$('lbl_incremental').textContent = i18n('opts_incremental');
+$('desc_incremental').textContent = i18n('opts_incrementalDesc');
 $('lbl_enabled').textContent = i18n('opts_enabled');
 $('desc_enabled').textContent = i18n('opts_enabledDesc');
 $('save').textContent = i18n('opts_save');
 
-const KEY = ['speed','muteAd','showNotification','blockHomeAds','enabled','playerSelector','adsSelectors','skipBtnSelector'];
+const KEY = ['speed','muteAd','showNotification','blockHomeAds','collapsePanelAds','incrementalSpeed','enabled','playerSelector','adsSelectors','skipBtnSelector'];
 const el = (id) => document.getElementById(id);
 
 chrome.storage.local.get(KEY, (d) => {
@@ -23,6 +27,8 @@ chrome.storage.local.get(KEY, (d) => {
   el('muteAd').checked = d.muteAd !== false;
   el('showNotification').checked = d.showNotification !== false;
   el('blockHomeAds').checked = d.blockHomeAds !== false;
+  el('collapsePanelAds').checked = d.collapsePanelAds !== false;
+  el('incrementalSpeed').checked = d.incrementalSpeed === true;
   el('enabled').checked = d.enabled !== false;
 });
 
@@ -32,6 +38,8 @@ el('save').onclick = () => {
     muteAd: el('muteAd').checked,
     showNotification: el('showNotification').checked,
     blockHomeAds: el('blockHomeAds').checked,
+    collapsePanelAds: el('collapsePanelAds').checked,
+    incrementalSpeed: el('incrementalSpeed').checked,
     enabled: el('enabled').checked
   }, () => {
     const s = el('status');
