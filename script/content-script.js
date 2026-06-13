@@ -148,9 +148,25 @@
                 if (t && t !== 'Ad') parts.push(t);
             }
         }
+
+
         const skipBtn = document.querySelector('.ytp-ad-skip-button, .ytp-skip-ad-button, .ytp-ad-skip-button-modern');
         if (skipBtn) {
             const t = skipBtn.textContent.trim();
+
+
+                // 取出 id 屬性
+                const id = skipBtn.getAttribute('id'); 
+                console.log("元件ID",id); // 例如 "skip-button:21"
+
+                // 如果只要數字部分
+                const match = id.match(/skip-button:(\d+)/);
+                if (match) {
+                    console.log("找到跳過按鈕",match[1]); // 例如 "21"
+                    match[1].click(); // 模擬點擊跳過按鈕
+                }
+                
+
             if (t && t !== 'Skip ad' && t !== 'Skip' && t !== '略過') parts.push(t);
         }
         const overlayTexts = [...document.querySelectorAll('.ytp-ad-player-overlay *')].map(e => e.textContent.trim()).filter(Boolean);
