@@ -22,6 +22,9 @@
 
 ## 安裝
 
+詳細步驟請見 [INSTALL.md](INSTALL.md)。
+
+快速版：
 1. 開啟 Edge，前往 `edge://extensions`
 2. 開啟左上角 **開發人員模式**
 3. 點選 **載入解壓縮**，選取 `skipads` 資料夾
