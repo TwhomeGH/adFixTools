@@ -170,8 +170,10 @@
                     console.log("找到跳過按鈕",match[1]); // 例如 "21"
                     let container = document.getElementById(id); // 根據 ID 取得元素
                     console.log("跳過BTN",container); // 確認是否找到按鈕
-                    container.focus();
-                    container.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+                    setTimeout(() => {
+                        container.click()
+                        console.log("模擬點擊按鈕",container); // 確認是否成功點擊
+                    }, 300); // 模擬點擊按鈕
                                     
                 }
 
