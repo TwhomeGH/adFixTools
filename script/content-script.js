@@ -169,10 +169,10 @@
                 if (match) {
                     console.log("找到跳過按鈕",match[1]); // 例如 "21"
                     let container = document.getElementById(id); // 根據 ID 取得元素
-                    const btn = container.querySelector("button");
-                    console.log("跳過BTN",btn,container); // 確認是否找到按鈕
-                    btn.click(); // 模擬點擊跳過按鈕
-                    
+                    console.log("跳過BTN",container); // 確認是否找到按鈕
+                    container.focus();
+                    container.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+                                    
                 }
 
 
