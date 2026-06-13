@@ -13,6 +13,8 @@
     "opts_blockAdsDesc":{ "message": "Hide promoted content on homepage & search" },
     "opts_collapsePanel":{ "message": "Collapse ad panels" },
     "opts_collapsePanelDesc":{ "message": "Auto-collapse ad panels under videos" },
+    "opts_collapseCd":{ "message": "Collapse cooldown" },
+    "opts_collapseCdDesc":{ "message": "Pause auto-collapse after manual toggle (0 = no pause)" },
     "opts_incremental":{ "message": "Incremental speed" },
     "opts_incrementalDesc":{ "message": "Progressively speed up unskippable ads (2x → 4x → 6x → 8x → 16x → 24x...)" },
     "opts_enabled":     { "message": "Enabled" },

@@ -1,12 +1,13 @@
 (() => {
     'use strict';
 
-    let opts = { speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, incrementalSpeed: false, enabled: true };
+    let opts = { speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, collapseCooldown: 15, incrementalSpeed: false, enabled: true };
     let wasAd = false;
     let lastSkip = 0;
     let toastEl = null;
     let adTitle = '';
     let adStartTime = 0;
+    const panelCooldowns = new Map();
 
     const AD_CSS = [
         'ytd-display-ad-renderer', 'ytd-statement-banner-renderer', 'ytd-ad-slot-renderer',
@@ -77,16 +78,37 @@
 
     const collapseAdPanels = () => {
         if (opts.collapsePanelAds === false) return;
-        for (const panel of document.querySelectorAll('ytd-engagement-panel-section-list-renderer')) {
-            if (panel.querySelector('panel-ad-header-image-lockup-view-model, .ytwAdBadgeViewModelHost')) {
-                const btn = panel.querySelector('toggle-button-view-model button');
-                if (btn && btn.getAttribute('aria-pressed') === 'true') {
-                    btn.click();
-                    console.log('[SkipAds] Collapsed ad panel');
-                }
+        document.querySelectorAll('ytd-engagement-panel-section-list-renderer').forEach(panel => {
+            if (!panel.querySelector('.ytwAdBadgeViewModelHost, panel-ad-header-image-lockup-view-model')) return;
+            if (panel.style.display === 'none') return;
+            if (panelCooldowns.get(panel) > Date.now()) return;
+            panelCooldowns.delete(panel);
+
+            const btn = panel.querySelector(
+                'button[aria-pressed="true"], ' +
+                'toggle-button-view-model button, ' +
+                '.ytwPanelAdHeaderImageLockupViewModelHostHeaderMetadataMenu button'
+            );
+            if (btn) {
+                btn.click();
+                console.log('[SkipAds] Collapsed ad panel');
+            } else {
+                panel.style.display = 'none';
+                console.log('[SkipAds] Hidden ad panel (fallback)');
             }
-        }
+        });
     };
+
+    document.addEventListener('click', (e) => {
+        if (opts.collapsePanelAds === false) return;
+        const btn = e.target.closest('toggle-button-view-model button, [aria-pressed]');
+        if (!btn) return;
+        const panel = btn.closest('ytd-engagement-panel-section-list-renderer');
+        if (!panel) return;
+        if (!panel.querySelector('.ytwAdBadgeViewModelHost, panel-ad-header-image-lockup-view-model')) return;
+        panelCooldowns.set(panel, Date.now() + (opts.collapseCooldown || 15) * 1000);
+        console.log('[SkipAds] User toggled ad panel, cooldown ' + (opts.collapseCooldown || 15) + 's');
+    });
 
     const calcIncrementalSpeed = (elapsed) => {
         const step = Math.floor(elapsed / 2);
@@ -146,7 +168,7 @@
     }, 300);
 
     chrome.storage.local.get({
-        speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, incrementalSpeed: false, enabled: true
+        speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, collapseCooldown: 15, incrementalSpeed: false, enabled: true
     }, (d) => {
         opts = d;
         if (opts.blockHomeAds) {

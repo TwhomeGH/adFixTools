@@ -13,6 +13,8 @@
     "opts_blockAdsDesc":{ "message": "隱藏 YouTube 首頁與搜尋結果的推廣內容" },
     "opts_collapsePanel":{ "message": "收納廣告面板" },
     "opts_collapsePanelDesc":{ "message": "自動收納影片下方的廣告面板" },
+    "opts_collapseCd":{ "message": "收合冷卻時間" },
+    "opts_collapseCdDesc":{ "message": "手動展開後暫停自動收合 (0 = 不暫停)" },
     "opts_incremental":{ "message": "遞增加速" },
     "opts_incrementalDesc":{ "message": "無法跳過的廣告自動遞增速度 (2x → 4x → 6x → 8x → 16x → 24x...)" },
     "opts_enabled":     { "message": "啟用" },
