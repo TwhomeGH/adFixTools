@@ -171,7 +171,7 @@
                     let container = document.getElementById(match[0]); // 根據 ID 取得元素
                     const btn = container.querySelector("button");
                     console.log("跳過BTN",btn); // 確認是否找到按鈕
-                    //resBTN.click(); // 模擬點擊跳過按鈕
+                    btn.click(); // 模擬點擊跳過按鈕
                     
                 }
 
