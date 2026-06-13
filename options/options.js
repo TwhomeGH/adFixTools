@@ -19,13 +19,15 @@ $('lbl_incremental').textContent = i18n('opts_incremental');
 $('desc_incremental').textContent = i18n('opts_incrementalDesc');
 $('lbl_hideChat').textContent = i18n('opts_hideChat');
 $('desc_hideChat').textContent = i18n('opts_hideChatDesc');
+$('lbl_hideChatCd').textContent = i18n('opts_hideChatCd');
+$('desc_hideChatCd').textContent = i18n('opts_hideChatCdDesc');
 $('lbl_debug').textContent = i18n('opts_debug');
 $('desc_debug').textContent = i18n('opts_debugDesc');
 $('lbl_enabled').textContent = i18n('opts_enabled');
 $('desc_enabled').textContent = i18n('opts_enabledDesc');
 $('save').textContent = i18n('opts_save');
 
-const KEY = ['speed','muteAd','showNotification','blockHomeAds','collapsePanelAds','collapseCooldown','incrementalSpeed','debugMode','hideChat','enabled','playerSelector','adsSelectors','skipBtnSelector'];
+const KEY = ['speed','muteAd','showNotification','blockHomeAds','collapsePanelAds','collapseCooldown','incrementalSpeed','debugMode','hideChat','hideChatCooldown','enabled','playerSelector','adsSelectors','skipBtnSelector'];
 const el = (id) => document.getElementById(id);
 
 chrome.storage.local.get(KEY, (d) => {
@@ -38,6 +40,7 @@ chrome.storage.local.get(KEY, (d) => {
   el('incrementalSpeed').checked = d.incrementalSpeed === true;
   el('debugMode').checked = d.debugMode === true;
   el('hideChat').checked = d.hideChat === true;
+  el('hideChatCooldown').value = d.hideChatCooldown || 0;
   el('enabled').checked = d.enabled !== false;
 });
 
@@ -52,6 +55,7 @@ el('save').onclick = () => {
     incrementalSpeed: el('incrementalSpeed').checked,
     debugMode: el('debugMode').checked,
     hideChat: el('hideChat').checked,
+    hideChatCooldown: parseInt(el('hideChatCooldown').value, 10),
     enabled: el('enabled').checked
   }, () => {
     const s = el('status');

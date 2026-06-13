@@ -19,6 +19,8 @@
     "opts_incrementalDesc":{ "message": "無法跳過的廣告自動遞增速度 (2x → 4x → 6x → 8x → 16x → 24x...)" },
     "opts_hideChat":    { "message": "隱藏聊天室" },
     "opts_hideChatDesc":{ "message": "直播頁面自動隱藏聊天室面板" },
+    "opts_hideChatCd":  { "message": "聊天室自動隱藏冷卻" },
+    "opts_hideChatCdDesc":{ "message": "用戶手動打開聊天室後，暫停自動隱藏的時間 (0 = 永不恢復)" },
     "opts_debug":       { "message": "除錯模式" },
     "opts_debugDesc":   { "message": "將廣告 DOM 資訊輸出至主控台，方便排錯" },
     "opts_enabled":     { "message": "啟用" },

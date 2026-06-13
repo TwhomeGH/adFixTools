@@ -63,6 +63,16 @@ input[type=checkbox]{width:18px;height:18px}
     <input type="checkbox" id="hideChat">
   </div>
   <div class="row">
+    <div><label id="lbl_hideChatCd"></label><div class="desc" id="desc_hideChatCd"></div></div>
+    <select id="hideChatCooldown">
+      <option value="5">5 秒</option>
+      <option value="10">10 秒</option>
+      <option value="30">30 秒</option>
+      <option value="60">1 分鐘</option>
+      <option value="0" selected>不自動恢復</option>
+    </select>
+  </div>
+  <div class="row">
     <div><label id="lbl_debug"></label><div class="desc" id="desc_debug"></div></div>
     <input type="checkbox" id="debugMode">
   </div>

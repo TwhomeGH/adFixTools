@@ -16,14 +16,31 @@
     let chatObserver = null;
     let chatTimer = null;
     let lastChatHideTime = 0;
+    let chatCooldownTimer = null;
+    let chatPaused = false;
+    const resumeAutoHide = () => {
+        if (chatCooldownTimer) { clearTimeout(chatCooldownTimer); chatCooldownTimer = null; }
+        chatPaused = false;
+        console.log('[SkipAds] Chat auto-hide resumed');
+    };
+    const pauseAutoHide = () => {
+        if (chatPaused) return;
+        chatPaused = true;
+        const cd = opts.hideChatCooldown || 0;
+        if (chatCooldownTimer) clearTimeout(chatCooldownTimer);
+        if (cd === 0) {
+            console.log('[SkipAds] Chat auto-hide paused indefinitely (user opened chat)');
+        } else {
+            chatCooldownTimer = setTimeout(resumeAutoHide, cd * 1000);
+            console.log(`[SkipAds] Chat auto-hide paused for ${cd}s`);
+        }
+    };
     const hideLiveChat = () => {
-        if (!opts.hideChat) return;
-        // Avoid infinite loop
+        if (!opts.hideChat || chatPaused) return;
         if (Date.now() - lastChatHideTime < 1000) return;
         lastChatHideTime = Date.now();
         
         const chat = document.querySelector('yt-live-chat-renderer, ytd-live-chat-frame, #chat, #chat-container, #live-chat, #chat-messages, yt-live-chat-frame');
-        debug('hideLiveChat: chat found:', !!chat);
         if (!chat) return;
         const ytIconBtn = chat.querySelector('yt-icon-button#close-button');
         const innerBtn = chat.querySelector('yt-icon-button#close-button button, #close-button button');
@@ -57,10 +74,12 @@
     const watchChat = () => {
         if (chatObserver) { chatObserver.disconnect(); chatObserver = null; }
         if (chatTimer) { clearInterval(chatTimer); chatTimer = null; }
+        if (chatCooldownTimer) { clearTimeout(chatCooldownTimer); chatCooldownTimer = null; }
+        chatPaused = false;
         if (!opts.hideChat) return;
         hideLiveChat();
         chatTimer = setInterval(() => {
-            if (!opts.hideChat) { clearInterval(chatTimer); chatTimer = null; return; }
+            if (!opts.hideChat || chatPaused) return;
             const chat = document.querySelector('yt-live-chat-renderer, ytd-live-chat-frame, #chat, #chat-container, #live-chat, #chat-messages, yt-live-chat-frame');
             if (!chat || chat.style.display === 'none') return;
             if (document.querySelector(CLOSE_BTN_SEL)) {
@@ -74,10 +93,13 @@
         chatObserver = new MutationObserver(() => {
             if (!opts.hideChat) { chatObserver.disconnect(); return; }
             const chat = document.querySelector('yt-live-chat-renderer, ytd-live-chat-frame, #chat, #chat-container, #live-chat, #chat-messages, yt-live-chat-frame');
-            if (!chat || chat.style.display === 'none') return;
+            if (!chat) return;
+            if (chat.style.display === 'none') return;
             if (document.querySelector(CLOSE_BTN_SEL)) {
-                console.log('[SkipAds] Chat re-appeared, clicking close button');
-                hideLiveChat();
+                if (!chatPaused) {
+                    console.log('[SkipAds] User opened chat, pausing auto-hide');
+                    pauseAutoHide();
+                }
             } else {
                 chat.style.display = 'none';
                 console.log('[SkipAds] Live chat hidden (fallback)');
@@ -155,36 +177,22 @@
         }
 
 
-        const skipBtn = document.querySelector('.ytp-ad-skip-button, .ytp-skip-ad-button, .ytp-ad-skip-button-modern');
-        if (skipBtn) {
+        const skipBtns = document.querySelectorAll('[id^="skip-button:"], .ytp-ad-skip-button, .ytp-skip-ad-button, .ytp-ad-skip-button-modern');
+        skipBtns.forEach(skipBtn => {
             const t = skipBtn.textContent.trim();
-
-
-                // 取出 id 屬性
-                const id = skipBtn.getAttribute('id'); 
-                console.log("元件ID",id); // 例如 "skip-button:21"
-
-                // 如果只要數字部分
-                const match = id.match(/skip-button:([a-zA-Z0-9]+)/);
-                if (match) {
-                    console.log("找到跳過按鈕",match[1]); // 例如 "21"
-                    let container = document.getElementById(id); // 根據 ID 取得元素
-                    console.log("跳過BTN",container); // 確認是否找到按鈕
-                    setTimeout(() => {
-                         // 方法 2：派發 MouseEvent，模擬真實滑鼠點擊
-                        container.dispatchEvent(new MouseEvent("click", {
-                            bubbles: true,
-                            cancelable: true,
-                            view: window
-                        }));
-                        
-                    }, 300); // 模擬點擊按鈕
-                                    
-                }
-
-
             if (t && t !== 'Skip ad' && t !== 'Skip' && t !== '略過') parts.push(t);
-        }
+
+            const btn = skipBtn.querySelector('button') || skipBtn;
+            ['mousedown', 'mouseup', 'click'].forEach(type => {
+                btn.dispatchEvent(new MouseEvent(type, {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window,
+                    buttons: 1
+                }));
+            });
+            debug('Clicked skip button:', skipBtn.id || skipBtn.className);
+        });
         const overlayTexts = [...document.querySelectorAll('.ytp-ad-player-overlay *')].map(e => e.textContent.trim()).filter(Boolean);
         parts.push(...overlayTexts);
         const unique = [...new Set(parts)];
@@ -372,7 +380,7 @@
     }, 300);
 
     chrome.storage.local.get({
-        speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, collapseCooldown: 15, incrementalSpeed: false, enabled: true, debugMode: false, hideChat: false
+        speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, collapseCooldown: 15, incrementalSpeed: false, enabled: true, debugMode: false, hideChat: false, hideChatCooldown: 0
     }, (d) => {
         opts = d;
         if (opts.blockHomeAds) {
@@ -386,7 +394,7 @@
         for (const k of Object.keys(changes)) {
             if (k in opts) opts[k] = changes[k].newValue;
         }
-        if ('hideChat' in changes) watchChat();
+        if ('hideChat' in changes || 'hideChatCooldown' in changes) watchChat();
         if ('enabled' in changes && !changes.enabled.newValue) {
             wasAd = false;
             updateAdOverlay('');
