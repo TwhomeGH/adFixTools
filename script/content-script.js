@@ -18,6 +18,7 @@
     let lastChatHideTime = 0;
     let chatCooldownTimer = null;
     let chatPaused = false;
+    let lastChatVisible = false;
     const resumeAutoHide = () => {
         if (chatCooldownTimer) { clearTimeout(chatCooldownTimer); chatCooldownTimer = null; }
         chatPaused = false;
@@ -71,41 +72,64 @@
             console.log('[SkipAds] Live chat hidden (fallback)');
         }
     };
+    const isChatVisible = (chat) => {
+        return chat && chat.style.display !== 'none' && chat.offsetWidth > 0 && chat.offsetHeight > 0;
+    };
     const watchChat = () => {
         if (chatObserver) { chatObserver.disconnect(); chatObserver = null; }
         if (chatTimer) { clearInterval(chatTimer); chatTimer = null; }
         if (chatCooldownTimer) { clearTimeout(chatCooldownTimer); chatCooldownTimer = null; }
         chatPaused = false;
+        lastChatVisible = false;
         if (!opts.hideChat) return;
         hideLiveChat();
-        chatTimer = setInterval(() => {
-            if (!opts.hideChat || chatPaused) return;
-            const chat = document.querySelector('yt-live-chat-renderer, ytd-live-chat-frame, #chat, #chat-container, #live-chat, #chat-messages, yt-live-chat-frame');
-            if (!chat || chat.style.display === 'none') return;
-            if (document.querySelector(CLOSE_BTN_SEL)) {
-                console.log('[SkipAds] Chat re-appeared, clicking close button');
-                hideLiveChat();
-            } else {
-                chat.style.display = 'none';
-                console.log('[SkipAds] Live chat hidden (fallback)');
-            }
-        }, 1000);
-        chatObserver = new MutationObserver(() => {
-            if (!opts.hideChat) { chatObserver.disconnect(); return; }
-            const chat = document.querySelector('yt-live-chat-renderer, ytd-live-chat-frame, #chat, #chat-container, #live-chat, #chat-messages, yt-live-chat-frame');
-            if (!chat) return;
-            if (chat.style.display === 'none') return;
-            if (document.querySelector(CLOSE_BTN_SEL)) {
-                if (!chatPaused) {
+        // 等待關閉動畫完成再啟動監聽，避免誤判
+        setTimeout(() => {
+            if (!opts.hideChat) return;
+            chatTimer = setInterval(() => {
+                if (!opts.hideChat || chatPaused) return;
+                const chat = document.querySelector('yt-live-chat-renderer, ytd-live-chat-frame, #chat, #chat-container, #live-chat, #chat-messages, yt-live-chat-frame');
+                const visible = isChatVisible(chat);
+                if (!visible) {
+                    lastChatVisible = false;
+                    return;
+                }
+                if (!lastChatVisible) {
                     console.log('[SkipAds] User opened chat, pausing auto-hide');
                     pauseAutoHide();
                 }
-            } else {
-                chat.style.display = 'none';
-                console.log('[SkipAds] Live chat hidden (fallback)');
-            }
-        });
-        chatObserver.observe(document.body || document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+                lastChatVisible = true;
+                if (document.querySelector(CLOSE_BTN_SEL)) {
+                    console.log('[SkipAds] Chat re-appeared, clicking close button');
+                    hideLiveChat();
+                } else {
+                    chat.style.display = 'none';
+                    console.log('[SkipAds] Live chat hidden (fallback)');
+                }
+            }, 1000);
+            chatObserver = new MutationObserver(() => {
+                if (!opts.hideChat) { chatObserver.disconnect(); return; }
+                const chat = document.querySelector('yt-live-chat-renderer, ytd-live-chat-frame, #chat, #chat-container, #live-chat, #chat-messages, yt-live-chat-frame');
+                const visible = isChatVisible(chat);
+                if (!visible) {
+                    lastChatVisible = false;
+                    return;
+                }
+                if (!lastChatVisible) {
+                    console.log('[SkipAds] User opened chat, pausing auto-hide');
+                    pauseAutoHide();
+                }
+                lastChatVisible = true;
+                if (document.querySelector(CLOSE_BTN_SEL)) {
+                    console.log('[SkipAds] Chat re-appeared, clicking close button');
+                    hideLiveChat();
+                } else {
+                    chat.style.display = 'none';
+                    console.log('[SkipAds] Live chat hidden (fallback)');
+                }
+            });
+            chatObserver.observe(document.body || document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+        }, 2800);
     };
 
     const updateAdOverlay = (text) => {
@@ -304,6 +328,7 @@
         if (opts.enabled !== false) {
             if (isAd) handleSurveyAd();
             if (isAd && v) {
+                if (opts.hideChat && !chatPaused) hideLiveChat();
                 if (!wasAd) {
                     adTitle = '';
                     adStartTime = Date.now();
@@ -377,7 +402,7 @@
                 updateAdOverlay('');
             }
         }
-    }, 300);
+    },700);
 
     chrome.storage.local.get({
         speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, collapseCooldown: 15, incrementalSpeed: false, enabled: true, debugMode: false, hideChat: false, hideChatCooldown: 0
