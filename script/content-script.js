@@ -171,8 +171,13 @@
                     let container = document.getElementById(id); // 根據 ID 取得元素
                     console.log("跳過BTN",container); // 確認是否找到按鈕
                     setTimeout(() => {
-                        container.click()
-                        console.log("模擬點擊按鈕",container); // 確認是否成功點擊
+                         // 方法 2：派發 MouseEvent，模擬真實滑鼠點擊
+                        container.dispatchEvent(new MouseEvent("click", {
+                            bubbles: true,
+                            cancelable: true,
+                            view: window
+                        }));
+                        
                     }, 300); // 模擬點擊按鈕
                                     
                 }
