@@ -4,6 +4,8 @@ const DEFAULTS = {
     showNotification: true,
     blockHomeAds: true,
     enabled: true,
+    debugMode: false,
+    hideChat: false,
     playerSelector: '#movie_player',
     adsSelectors: ['ad-showing', 'ad-interrupting'],
     skipBtnSelector: '.ytp-ad-skip-button-modern.ytp-button,.ytp-skip-ad-button',

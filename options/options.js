@@ -17,11 +17,15 @@ $('lbl_collapseCd').textContent = i18n('opts_collapseCd');
 $('desc_collapseCd').textContent = i18n('opts_collapseCdDesc');
 $('lbl_incremental').textContent = i18n('opts_incremental');
 $('desc_incremental').textContent = i18n('opts_incrementalDesc');
+$('lbl_hideChat').textContent = i18n('opts_hideChat');
+$('desc_hideChat').textContent = i18n('opts_hideChatDesc');
+$('lbl_debug').textContent = i18n('opts_debug');
+$('desc_debug').textContent = i18n('opts_debugDesc');
 $('lbl_enabled').textContent = i18n('opts_enabled');
 $('desc_enabled').textContent = i18n('opts_enabledDesc');
 $('save').textContent = i18n('opts_save');
 
-const KEY = ['speed','muteAd','showNotification','blockHomeAds','collapsePanelAds','collapseCooldown','incrementalSpeed','enabled','playerSelector','adsSelectors','skipBtnSelector'];
+const KEY = ['speed','muteAd','showNotification','blockHomeAds','collapsePanelAds','collapseCooldown','incrementalSpeed','debugMode','hideChat','enabled','playerSelector','adsSelectors','skipBtnSelector'];
 const el = (id) => document.getElementById(id);
 
 chrome.storage.local.get(KEY, (d) => {
@@ -32,6 +36,8 @@ chrome.storage.local.get(KEY, (d) => {
   el('collapsePanelAds').checked = d.collapsePanelAds !== false;
   el('collapseCooldown').value = d.collapseCooldown || 15;
   el('incrementalSpeed').checked = d.incrementalSpeed === true;
+  el('debugMode').checked = d.debugMode === true;
+  el('hideChat').checked = d.hideChat === true;
   el('enabled').checked = d.enabled !== false;
 });
 
@@ -44,6 +50,8 @@ el('save').onclick = () => {
     collapsePanelAds: el('collapsePanelAds').checked,
     collapseCooldown: parseInt(el('collapseCooldown').value, 10),
     incrementalSpeed: el('incrementalSpeed').checked,
+    debugMode: el('debugMode').checked,
+    hideChat: el('hideChat').checked,
     enabled: el('enabled').checked
   }, () => {
     const s = el('status');
