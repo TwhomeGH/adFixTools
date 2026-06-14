@@ -26,5 +26,19 @@
     "opts_enabled":     { "message": "Enabled" },
     "opts_enabledDesc": { "message": "Keyboard: Ctrl+Shift+X to toggle" },
     "opts_save":        { "message": "Save" },
-    "opts_saved":       { "message": "Saved" }
+    "opts_saved":       { "message": "Saved" },
+    "opts_statsTitle":  { "message": "Statistics" },
+    "opts_statsDesc":   { "message": "Ad skipping statistics" },
+    "opts_statsTotalSkips": { "message": "Total ads skipped" },
+    "opts_statsTimeSaved":  { "message": "Time saved" },
+    "opts_statsAvgAdDuration": { "message": "Avg ad duration" },
+    "opts_statsHistoryTitle": { "message": "Recent skips" },
+    "opts_statsHistoryEmpty": { "message": "No ads skipped yet" },
+    "opts_statsClear": { "message": "Clear history" },
+    "opts_statsClearConfirm": { "message": "Clear all statistics?" },
+    "opts_theme": { "message": "Theme" },
+    "opts_themeDesc": { "message": "Choose color theme for settings page" },
+    "opts_themeSystem": { "message": "System" },
+    "opts_themeLight": { "message": "Light" },
+    "opts_themeDark": { "message": "Dark" }
 }

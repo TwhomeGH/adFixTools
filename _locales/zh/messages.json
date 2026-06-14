@@ -26,5 +26,19 @@
     "opts_enabled":     { "message": "啟用" },
     "opts_enabledDesc": { "message": "快捷鍵：Ctrl+Shift+X 切換開關" },
     "opts_save":        { "message": "儲存" },
-    "opts_saved":       { "message": "已儲存" }
+    "opts_saved":       { "message": "已儲存" },
+    "opts_statsTitle":  { "message": "統計資料" },
+    "opts_statsDesc":   { "message": "廣告跳過統計資訊" },
+    "opts_statsTotalSkips": { "message": "總計略過廣告" },
+    "opts_statsTimeSaved":  { "message": "節省時間" },
+    "opts_statsAvgAdDuration": { "message": "平均廣告長度" },
+    "opts_statsHistoryTitle": { "message": "最近跳過紀錄" },
+    "opts_statsHistoryEmpty": { "message": "尚無跳過紀錄" },
+    "opts_statsClear": { "message": "清除紀錄" },
+    "opts_statsClearConfirm": { "message": "確定清除所有統計資料？" },
+    "opts_theme": { "message": "主題" },
+    "opts_themeDesc": { "message": "選擇設定頁面的色彩主題" },
+    "opts_themeSystem": { "message": "跟隨系統" },
+    "opts_themeLight": { "message": "淺色" },
+    "opts_themeDark": { "message": "深色" }
 }

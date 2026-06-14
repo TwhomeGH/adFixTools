@@ -27,6 +27,13 @@ $('lbl_enabled').textContent = i18n('opts_enabled');
 $('desc_enabled').textContent = i18n('opts_enabledDesc');
 $('save').textContent = i18n('opts_save');
 
+$('lbl_statsTitle').textContent = i18n('opts_statsTitle');
+$('lbl_statsTotalSkips').textContent = i18n('opts_statsTotalSkips');
+$('lbl_statsTimeSaved').textContent = i18n('opts_statsTimeSaved');
+$('lbl_statsAvgAdDuration').textContent = i18n('opts_statsAvgAdDuration');
+$('lbl_statsHistoryTitle').textContent = i18n('opts_statsHistoryTitle');
+$('btn_clearStats').textContent = i18n('opts_statsClear');
+
 const KEY = ['speed','muteAd','showNotification','blockHomeAds','collapsePanelAds','collapseCooldown','incrementalSpeed','debugMode','hideChat','hideChatCooldown','enabled','playerSelector','adsSelectors','skipBtnSelector'];
 const el = (id) => document.getElementById(id);
 
@@ -43,6 +50,46 @@ chrome.storage.local.get(KEY, (d) => {
   el('hideChatCooldown').value = d.hideChatCooldown || 0;
   el('enabled').checked = d.enabled !== false;
 });
+
+function loadStats() {
+  chrome.storage.local.get('skipStats', (data) => {
+    const stats = data.skipStats || { totalSkips: 0, totalTimeSaved: 0, history: [] };
+    $('stat_totalSkips').textContent = stats.totalSkips;
+    $('stat_timeSaved').textContent = formatTime(stats.totalTimeSaved);
+    const avg = stats.totalSkips > 0 ? Math.round(stats.totalTimeSaved / stats.totalSkips) : 0;
+    $('stat_avgDuration').textContent = formatTime(avg);
+    renderHistory(stats.history);
+  });
+}
+
+function formatTime(seconds) {
+  if (seconds >= 3600) return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+  if (seconds >= 60) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+  return `${seconds}s`;
+}
+
+function renderHistory(history) {
+  const container = $('statsHistory');
+  if (!history.length) {
+    container.textContent = i18n('opts_statsHistoryEmpty');
+    return;
+  }
+  container.innerHTML = history.map(h => `
+    <div style="padding:6px 0;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center">
+      <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.title}</div>
+      <div style="margin-left:12px;font-variant-numeric:tabular-nums">${formatTime(h.timeSaved)}</div>
+      <div style="margin-left:12px;color:#999;font-size:11px">${new Date(h.timestamp).toLocaleString()}</div>
+    </div>
+  `).join('');
+}
+
+$('btn_clearStats').onclick = () => {
+  if (confirm(i18n('opts_statsClearConfirm'))) {
+    chrome.storage.local.set({ skipStats: { totalSkips: 0, totalTimeSaved: 0, history: [] } }, loadStats);
+  }
+};
+
+loadStats();
 
 el('save').onclick = () => {
   chrome.storage.local.set({
