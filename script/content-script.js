@@ -430,18 +430,13 @@
                 debug('Muting ad video, current muted:', v.muted);
                 v.muted = true;
                 debug('After mute, muted:', v.muted);
-                const adVideos = document.querySelectorAll('.video-ads video, .ytp-ad-player-overlay video, .ytp-ad-module video, #movie_player video');
-                adVideos.forEach(adVideo => {
-                    if (adVideo !== v) {
-                        debug('Found separate ad video element, muting it too', adVideo);
-                        adVideo.muted = true;
-                    }
-                });
-                if (muteEnforcer) clearInterval(muteEnforcer);
-                muteEnforcer = setInterval(() => {
-                    v.muted = true;
+                const muteAdVideos = () => {
+                    const adVideos = document.querySelectorAll('.video-ads video, .ytp-ad-player-overlay video, .ytp-ad-module video, #movie_player video');
                     adVideos.forEach(adVideo => { adVideo.muted = true; });
-                }, 500);
+                };
+                muteAdVideos();
+                if (muteEnforcer) clearInterval(muteEnforcer);
+                muteEnforcer = setInterval(muteAdVideos, 500);
             }
             wasAd = true;
 
@@ -480,6 +475,12 @@
                     console.log('[SkipAds] Skipped, title:', title);
                     showToast(title);
                     recordSkipStats(title, v);
+                    if (muteEnforcer) { clearInterval(muteEnforcer); muteEnforcer = null; }
+                    if (v) { v.playbackRate = 1; v.muted = adOriginalMuted; }
+                    wasAd = false;
+                    adTitle = '';
+                    inspectedAd = false;
+                    lastPrintedAd = '';
                 }
             } else {
                 if (opts.debugMode && !inspectedAd) {
@@ -504,6 +505,12 @@
                     debug('Force clicked hidden skip button with coords', cx, cy);
                     const title = adTitle || getAdInfo();
                     recordSkipStats(title, v);
+                    if (muteEnforcer) { clearInterval(muteEnforcer); muteEnforcer = null; }
+                    if (v) { v.playbackRate = 1; v.muted = adOriginalMuted; }
+                    wasAd = false;
+                    adTitle = '';
+                    inspectedAd = false;
+                    lastPrintedAd = '';
                 } else {
                     debug('No hidden skip button found either');
                 }
@@ -595,7 +602,7 @@
             updateAdOverlay('');
             if (muteEnforcer) { clearInterval(muteEnforcer); muteEnforcer = null; }
             const v = document.querySelector('#movie_player video');
-            if (v) { v.playbackRate = 1; v.muted = false; }
+            if (v) { v.playbackRate = 1; v.muted = adOriginalMuted; }
         }
         if ('debugMode' in changes && changes.debugMode.newValue) {
             debug('[SkipAds:debug] Debug mode enabled');

@@ -33,8 +33,10 @@ $('lbl_statsTimeSaved').textContent = i18n('opts_statsTimeSaved');
 $('lbl_statsAvgAdDuration').textContent = i18n('opts_statsAvgAdDuration');
 $('lbl_statsHistoryTitle').textContent = i18n('opts_statsHistoryTitle');
 $('btn_clearStats').textContent = i18n('opts_statsClear');
+$('lbl_theme').textContent = i18n('opts_theme');
+$('desc_theme').textContent = i18n('opts_themeDesc');
 
-const KEY = ['speed','muteAd','showNotification','blockHomeAds','collapsePanelAds','collapseCooldown','incrementalSpeed','debugMode','hideChat','hideChatCooldown','enabled','playerSelector','adsSelectors','skipBtnSelector'];
+const KEY = ['speed','muteAd','showNotification','blockHomeAds','collapsePanelAds','collapseCooldown','incrementalSpeed','debugMode','hideChat','hideChatCooldown','enabled','theme','playerSelector','adsSelectors','skipBtnSelector'];
 const el = (id) => document.getElementById(id);
 
 chrome.storage.local.get(KEY, (d) => {
@@ -49,7 +51,17 @@ chrome.storage.local.get(KEY, (d) => {
   el('hideChat').checked = d.hideChat === true;
   el('hideChatCooldown').value = d.hideChatCooldown || 0;
   el('enabled').checked = d.enabled !== false;
+  el('theme').value = d.theme || 'system';
+  applyTheme(d.theme || 'system');
 });
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+}
+
+el('theme').onchange = () => {
+  applyTheme(el('theme').value);
+};
 
 function loadStats() {
   chrome.storage.local.get('skipStats', (data) => {
@@ -103,7 +115,8 @@ el('save').onclick = () => {
     debugMode: el('debugMode').checked,
     hideChat: el('hideChat').checked,
     hideChatCooldown: parseInt(el('hideChatCooldown').value, 10),
-    enabled: el('enabled').checked
+    enabled: el('enabled').checked,
+    theme: el('theme').value
   }, () => {
     const s = el('status');
     s.textContent = i18n('opts_saved');
