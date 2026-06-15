@@ -54,6 +54,17 @@
 | 除錯模式 | 輸出廣告 DOM 資訊至主控台 |
 | 主題 | 設定頁色彩：跟隨系統 / 淺色 / 深色 |
 
+## 贊助支持
+
+如果你覺得這個工具對你有幫助，歡迎透過以下方式贊助一杯咖啡 ☕
+
+- [PayPal](https://paypal.me/coffeelatte0709)
+- [TikTok](https://www.tiktok.com/@coffeelatte0709?_r=1&_t=ZS-914gBZGkAKO)
+- [街口支付](https://service.jkopay.com/r/transfer?j=Transfer:911210964)
+- [Twitch 贈送訂閱](https://www.twitch.tv/coffeelatte0709)
+
+你的支持是持續開發的動力，感謝！
+
 ## 技術說明
 
 - Manifest V3，僅需 `storage` 權限
