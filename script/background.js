@@ -3,9 +3,15 @@ const DEFAULTS = {
     muteAd: true,
     showNotification: true,
     blockHomeAds: true,
+    collapsePanelAds: true,
+    collapseCooldown: 15,
+    incrementalSpeed: false,
     enabled: true,
     debugMode: false,
     hideChat: false,
+    hideChatCooldown: 0,
+    theme: 'system',
+    skipStats: { totalSkips: 0, totalTimeSaved: 0, history: [] },
     playerSelector: '#movie_player',
     adsSelectors: ['ad-showing', 'ad-interrupting'],
     skipBtnSelector: '.ytp-ad-skip-button-modern.ytp-button,.ytp-skip-ad-button',
@@ -30,7 +36,7 @@ const DEFAULTS = {
 };
 
 chrome.runtime.onInstalled.addListener(() => {
-    chrome.storage.local.get(DEFAULTS, (existing) => {
+    chrome.storage.local.get(Object.keys(DEFAULTS), (existing) => {
         const missing = {};
         for (const key in DEFAULTS) {
             if (!(key in existing)) {

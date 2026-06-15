@@ -349,8 +349,9 @@
         const panel = btn.closest('ytd-engagement-panel-section-list-renderer');
         if (!panel) return;
         if (!panel.querySelector('.ytwAdBadgeViewModelHost, panel-ad-header-image-lockup-view-model')) return;
-        panelCooldowns.set(panel, Date.now() + (opts.collapseCooldown || 15) * 1000);
-        console.log('[SkipAds] User toggled ad panel, cooldown ' + (opts.collapseCooldown || 15) + 's');
+        const collapseCooldown = opts.collapseCooldown ?? 15;
+        panelCooldowns.set(panel, Date.now() + collapseCooldown * 1000);
+        console.log('[SkipAds] User toggled ad panel, cooldown ' + collapseCooldown + 's');
     });
 
     document.addEventListener('click', (e) => {
