@@ -1,9 +1,9 @@
 # SkipAds — YouTube Ad Skipper
 
 <p align="center">
-  <img src="docs/adSetting.png" alt="設定頁面" width="45%">
+  <img src="docs/adInfo3.png" alt="設定頁面" width="45%">
   &nbsp;&nbsp;
-  <img src="docs/adInfo2.png" alt="統計資訊" width="45%">
+  <img src="docs/adInfo4.png" alt="統計資訊" width="45%">
 </p>
 
 輕量級 Edge 擴充功能，自動跳過 YouTube 廣告，支援加速、靜音、首頁廣告封鎖。
@@ -25,8 +25,9 @@
 - **收納廣告面板** — 自動收合影片下方的贊助商廣告面板
 - **首頁廣告封鎖** — 隱藏 YouTube 首頁與搜尋結果的推廣內容
 - **隱藏聊天室** — 直播頁面自動隱藏聊天室；用戶手動開啟後暫停自動隱藏（可設定冷卻時間）
+- **隱藏推薦商品** — 自動隱藏播放器上的購物推薦商品覆蓋層，商品資訊仍記入統計
 - **Toast 通知** — 跳過廣告時顯示短暫通知（含廣告標題）
-- **統計資料** — 記錄總跳過次數、節省時間、平均廣告長度與最近跳過紀錄（最多 50 筆）
+- **統計資料** — 記錄廣告與推薦商品的統計，包含次數、節省時間與最近紀錄（最多各 50 筆）
 - **主題切換** — 設定頁支援跟隨系統、淺色、深色三種模式
 - **快捷鍵** — `Ctrl+Shift+X` 快速開關
 - **多語言** — 支援繁體中文與 English
@@ -57,6 +58,7 @@
 | 啟用 | 開關擴充功能（快捷鍵 Ctrl+Shift+X） |
 | 隱藏聊天室 | 直播頁面自動隱藏聊天室 |
 | 聊天室自動隱藏冷卻 | 用戶手動開啟後暫停自動隱藏的時間 (0 = 永不恢復) |
+| 隱藏推薦商品 | 隱藏播放器上的購物推薦覆蓋層，商品資訊仍記入統計 |
 | 除錯模式 | 輸出廣告 DOM 資訊至主控台 |
 | 主題 | 設定頁色彩：跟隨系統 / 淺色 / 深色 |
 
@@ -105,7 +107,16 @@ skipads/
 
 ## 版本紀錄
 
-**v2.5** — 聊天室自動隱藏重寫
+**v2.6** — 推薦商品開關 & 統計獨立區塊
+- 新增「隱藏推薦商品」開關，用戶可自行決定是否隱藏播放器上的購物推薦覆蓋層
+- 新增「推薦商品」獨立統計區塊：紀錄商品標題、價格、店家、縮圖，可獨立清除
+- 改用永久 CSS 規則隱藏推薦商品（`.ytp-featured-product{display:none!important}`），YouTube 重建元素也立即隱藏
+- 新增去重邏輯：相同商品不重複紀錄
+- 設定頁寬螢幕適配：最大寬度 960px，設定項目改為 2 欄網格佈局，字型與間距放大
+- 推薦商品統計可獨立清除，不影響廣告統計數據
+
+**v2.5** — 聊天室自動隱藏重寫 & 隱藏推薦商品
+- 新增隱藏播放器上的購物推薦商品覆蓋層（`.ytp-suggested-action-badge`）
 - 修復聊天室隱藏打錯靶的問題：selector 從 `#panels-full-bleed-container` 改為 `#chat-container, #panels-full-bleed-container`（聊天室實際在 `#chat-container` 內的 iframe）
 - 改用 `visibility: hidden; height: 0` 取代 `display: none`，避免觸發 YouTube 版面重排導致影片卡住
 - 新增三重保護機制：document 層級 DOM observer + 元素 style observer + 2 秒 interval 備份

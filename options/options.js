@@ -17,6 +17,8 @@ $('lbl_collapseCd').textContent = i18n('opts_collapseCd');
 $('desc_collapseCd').textContent = i18n('opts_collapseCdDesc');
 $('lbl_incremental').textContent = i18n('opts_incremental');
 $('desc_incremental').textContent = i18n('opts_incrementalDesc');
+$('lbl_hideFeaturedProduct').textContent = i18n('opts_hideFeaturedProduct');
+$('desc_hideFeaturedProduct').textContent = i18n('opts_hideFeaturedProductDesc');
 $('lbl_hideChat').textContent = i18n('opts_hideChat');
 $('desc_hideChat').textContent = i18n('opts_hideChatDesc');
 $('lbl_hideChatCd').textContent = i18n('opts_hideChatCd');
@@ -33,6 +35,10 @@ $('lbl_statsTimeSaved').textContent = i18n('opts_statsTimeSaved');
 $('lbl_statsAvgAdDuration').textContent = i18n('opts_statsAvgAdDuration');
 $('lbl_statsHistoryTitle').textContent = i18n('opts_statsHistoryTitle');
 $('btn_clearStats').textContent = i18n('opts_statsClear');
+$('lbl_fpStatsTitle').textContent = i18n('opts_fpStatsTitle');
+$('lbl_fpStatsTotalSeen').textContent = i18n('opts_fpStatsTotalSeen');
+$('lbl_fpStatsHistoryTitle').textContent = i18n('opts_fpStatsHistoryTitle');
+$('btn_clearFpStats').textContent = i18n('opts_statsClear');
 $('lbl_theme').textContent = i18n('opts_theme');
 $('desc_theme').textContent = i18n('opts_themeDesc');
 $('collapseCooldown5').textContent = i18n('opts_seconds', '5');
@@ -50,7 +56,7 @@ $('themeSystem').textContent = i18n('opts_themeSystem');
 $('themeLight').textContent = i18n('opts_themeLight');
 $('themeDark').textContent = i18n('opts_themeDark');
 
-const KEY = ['speed','muteAd','showNotification','blockHomeAds','collapsePanelAds','collapseCooldown','incrementalSpeed','debugMode','hideChat','hideChatCooldown','enabled','theme','playerSelector','adsSelectors','skipBtnSelector'];
+const KEY = ['speed','muteAd','showNotification','blockHomeAds','collapsePanelAds','collapseCooldown','incrementalSpeed','debugMode','hideChat','hideChatCooldown','hideFeaturedProduct','enabled','theme','playerSelector','adsSelectors','skipBtnSelector'];
 const el = (id) => document.getElementById(id);
 
 chrome.storage.local.get(KEY, (d) => {
@@ -64,6 +70,7 @@ chrome.storage.local.get(KEY, (d) => {
   el('debugMode').checked = d.debugMode === true;
   el('hideChat').checked = d.hideChat === true;
   el('hideChatCooldown').value = d.hideChatCooldown || 0;
+  el('hideFeaturedProduct').checked = d.hideFeaturedProduct !== false;
   el('enabled').checked = d.enabled !== false;
   el('theme').value = d.theme || 'system';
   applyTheme(d.theme || 'system');
@@ -92,6 +99,74 @@ function formatTime(seconds) {
   if (seconds >= 3600) return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
   if (seconds >= 60) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
   return `${seconds}s`;
+}
+
+function loadFpStats() {
+  chrome.storage.local.get('featuredProductStats', (data) => {
+    const stats = data.featuredProductStats || { totalSeen: 0, history: [] };
+    $('stat_fpTotalSeen').textContent = stats.totalSeen;
+    renderFpHistory(stats.history);
+  });
+}
+
+function renderFpHistory(history) {
+  const container = $('fpStatsHistory');
+  container.textContent = '';
+  if (!history.length) {
+    container.textContent = i18n('opts_statsHistoryEmpty');
+    return;
+  }
+  history.forEach((h) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'padding:6px 0;border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:8px';
+
+    if (h.imgSrc) {
+      const img = document.createElement('img');
+      img.src = h.imgSrc;
+      img.style.cssText = 'width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0';
+      row.appendChild(img);
+    }
+
+    const left = document.createElement('div');
+    left.style.cssText = 'flex:1;overflow:hidden;display:flex;flex-direction:column;min-width:0';
+
+    const title = document.createElement('div');
+    title.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer';
+    title.textContent = h.title || 'Unknown';
+    title.title = h.title || 'Unknown';
+    title.onclick = () => {
+      const expanded = title.style.whiteSpace !== 'normal';
+      title.style.whiteSpace = expanded ? 'normal' : 'nowrap';
+      title.style.textOverflow = expanded ? 'clip' : 'ellipsis';
+      title.style.overflow = expanded ? 'visible' : 'hidden';
+    };
+    left.appendChild(title);
+
+    if (h.price) {
+      const price = document.createElement('div');
+      price.style.cssText = 'font-size:11px;color:var(--stat-color)';
+      price.textContent = h.price;
+      left.appendChild(price);
+    }
+
+    if (h.url) {
+      const link = document.createElement('a');
+      link.textContent = h.url;
+      link.href = h.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.style.cssText = 'font-size:11px;color:var(--stat-color);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block';
+      link.title = h.url;
+      left.appendChild(link);
+    }
+
+    const timestamp = document.createElement('div');
+    timestamp.style.cssText = 'margin-left:12px;color:#999;font-size:11px;flex-shrink:0';
+    timestamp.textContent = h.timestamp ? new Date(h.timestamp).toLocaleString() : '';
+
+    row.append(left, timestamp);
+    container.appendChild(row);
+  });
 }
 
 function renderHistory(history) {
@@ -150,7 +225,14 @@ $('btn_clearStats').onclick = () => {
   }
 };
 
+$('btn_clearFpStats').onclick = () => {
+  if (confirm(i18n('opts_fpStatsClearConfirm'))) {
+    chrome.storage.local.set({ featuredProductStats: { totalSeen: 0, history: [] } }, loadFpStats);
+  }
+};
+
 loadStats();
+loadFpStats();
 
 el('save').onclick = () => {
   chrome.storage.local.set({
@@ -164,6 +246,7 @@ el('save').onclick = () => {
     debugMode: el('debugMode').checked,
     hideChat: el('hideChat').checked,
     hideChatCooldown: parseInt(el('hideChatCooldown').value, 10),
+    hideFeaturedProduct: el('hideFeaturedProduct').checked,
     enabled: el('enabled').checked,
     theme: el('theme').value
   }, () => {

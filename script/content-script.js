@@ -1,7 +1,7 @@
 (() => {
     'use strict';
 
-    let opts = { speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, collapseCooldown: 15, incrementalSpeed: false, enabled: true, debugMode: false, hideChat: false };
+    let opts = { speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, collapseCooldown: 15, incrementalSpeed: false, enabled: true, debugMode: false, hideChat: false, hideFeaturedProduct: true };
     let wasAd = false;
     let lastSkip = 0;
     let toastEl = null;
@@ -682,8 +682,99 @@
         if (v && v !== currentVideo) attachTimeUpdate(v);
     };
 
+    const MAX_FP_HISTORY = 50;
+    const getFeaturedProductInfo = (el) => {
+        const titleEl = el.querySelector('.ytp-featured-product-title');
+        const priceEl = el.querySelector('[class*="price"]');
+        const vendorEl = el.querySelector('[class*="vendor"]');
+        const img = el.querySelector('img');
+        const parts = [];
+        for (const node of el.querySelectorAll(':scope > *')) {
+            const t = node.textContent.trim();
+            if (t) parts.push(t);
+        }
+        if (!parts.length) {
+            const t = el.textContent.trim();
+            if (t) parts.push(t);
+        }
+        let title = titleEl?.textContent?.trim() || parts[0] || '';
+        let price = priceEl?.textContent?.trim() || '';
+        if (!price) {
+            for (const p of parts) {
+                const m = p.match(/[$¥£€][\s]*[\d,]+(?:\.\d{2})?/);
+                if (m) { price = m[0]; break; }
+            }
+        }
+        if (!price) {
+            const lbl = el.querySelector('[aria-label*="$"], [aria-label*="NT$"], [aria-label*="price"], [aria-label*="價格"]');
+            if (lbl) {
+                const m = lbl.getAttribute('aria-label').match(/[$¥£€][\s]*[\d,]+(?:\.\d{2})?/);
+                if (m) price = m[0];
+            }
+        }
+        const vendor = vendorEl?.textContent?.trim() || '';
+        const full = title + (vendor ? ` (${vendor})` : '');
+        return {
+            title: full,
+            baseTitle: title,
+            price: price || '',
+            imgSrc: img?.src || '',
+            url: ''
+        };
+    };
+    const recordFeaturedProduct = (info) => {
+        try { if (!chrome.runtime?.id) return; } catch (e) { return; }
+        const { title, baseTitle, price, url, imgSrc } = info;
+        if (!title && !price) return;
+        try {
+            chrome.storage.local.get(['featuredProductStats'], (data) => {
+                const stats = data.featuredProductStats || { totalSeen: 0, history: [] };
+                if (stats.history.length > 0) {
+                    const last = stats.history[0];
+                    const lastBase = last.baseTitle || last.title.replace(/\s*\([^)]*\)\s*$/, '');
+                    if (lastBase === (baseTitle || title) && last.price === price) return;
+                }
+                stats.totalSeen += 1;
+                const entry = {
+                    title: title || '(unknown product)',
+                    baseTitle: baseTitle || title || '',
+                    price: price || '',
+                    url: url || '',
+                    imgSrc: imgSrc || '',
+                    timestamp: Date.now()
+                };
+                stats.history.unshift(entry);
+                if (stats.history.length > MAX_FP_HISTORY) {
+                    stats.history = stats.history.slice(0, MAX_FP_HISTORY);
+                }
+                try { chrome.storage.local.set({ featuredProductStats: stats }); } catch (e) {}
+            });
+        } catch (e) {}
+    };
+    let fpStyleInjected = false;
+    const collapseFeaturedProduct = () => {
+        if (!opts.hideFeaturedProduct) return;
+        if (!fpStyleInjected) {
+            const s = document.createElement('style');
+            s.id = 'sks-hide-fp';
+            s.textContent = '.ytp-featured-product{display:none!important}';
+            (document.head || document.documentElement).appendChild(s);
+            fpStyleInjected = true;
+        }
+        document.querySelectorAll('.ytp-suggested-action-badge.ytp-featured-product').forEach(el => {
+            if (el.style.display !== 'none') {
+                if (opts.debugMode) console.log('[SkipAds:debug] featured product badge:', el.outerHTML.slice(0, 2000));
+                const info = getFeaturedProductInfo(el);
+                if (opts.debugMode) console.log('[SkipAds:debug] extracted product info:', info);
+                recordFeaturedProduct(info);
+                el.style.setProperty('display', 'none', 'important');
+            }
+        });
+    };
+
     setInterval(() => {
         collapseAdPanels();
+        collapseFeaturedProduct();
         checkVideo();
     }, 2000);
 
@@ -707,9 +798,12 @@
     }, true);
 
     chrome.storage.local.get({
-        speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, collapseCooldown: 15, incrementalSpeed: false, enabled: true, debugMode: false, hideChat: false, hideChatCooldown: 0
+        speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, collapseCooldown: 15, incrementalSpeed: false, enabled: true, debugMode: false, hideChat: false, hideChatCooldown: 0, hideFeaturedProduct: true
     }, (d) => {
         opts = d;
+        if (opts.hideFeaturedProduct) {
+            collapseFeaturedProduct();
+        }
         if (opts.blockHomeAds) {
             const w = () => { document.head ? injectAdBlockStyle() : setTimeout(w, 100); };
             w();
@@ -722,6 +816,12 @@
             if (k in opts) opts[k] = changes[k].newValue;
         }
         if ('hideChat' in changes || 'hideChatCooldown' in changes) watchChat();
+        if ('hideFeaturedProduct' in changes && !changes.hideFeaturedProduct.newValue) {
+            const fpStyle = document.getElementById('sks-hide-fp');
+            if (fpStyle) fpStyle.remove();
+            document.querySelectorAll('.ytp-suggested-action-badge').forEach(el => el.style.removeProperty('display'));
+            fpStyleInjected = false;
+        }
         if ('enabled' in changes && !changes.enabled.newValue) {
             wasAd = false;
             adOriginalMutedSaved = false;
