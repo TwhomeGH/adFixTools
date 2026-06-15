@@ -96,6 +96,22 @@ Rename-Item skipads-firefox.zip skipads-firefox.xpi -Force
 
 ---
 
+## 已知限制：CSP 政策
+
+YouTube 近期開始套用 **Content Security Policy（CSP）**，會封鎖插件透過 `<script>` 注入的方式模擬可信點擊。
+
+**影響範圍：**
+- 有跳過按鈕的廣告（如 `ytp-video-interstitial-buttoned-centered-layout` 格式）無法自動點擊跳過
+- 聊天室自動關閉功能也可能受影響
+
+**解決方式：**
+
+安裝可關閉 CSP 的瀏覽器擴充功能，例如：
+
+- **[Disable CSP](https://chromewebstore.google.com/detail/disable-csp/ceipbakplhfdlpdnlbgijndekkohpjoo)**（Chromium 瀏覽器）
+
+安裝後，插件即可繞過 CSP 限制正常跳過廣告。若不安裝也**不影響核心功能**——加速、靜音、首頁廣告封鎖等仍正常運作，有跳過按鈕的廣告只需手動點一下略過（約 1 秒即可點擊）。
+
 ## 快捷鍵
 
 `Ctrl+Shift+X` — 快速開關擴充功能。

@@ -99,6 +99,14 @@ skipads/
 
 ## 版本紀錄
 
+**v2.3** — 穩定性修復 & CSP 相容性
+- 修復 MutationObserver 無限迴圈導致 YouTube 頁面卡死的問題
+- 修復 `clickEl` 遺失函數導致跳過按鈕無法點擊的問題
+- 支援 `ytp-video-interstitial-buttoned-centered-layout` 新型廣告格式的略過按鈕
+- 新增 CSP 政策已知限制說明（建議安裝 Disable CSP 插件）
+- 修復 YouTube 聊天室按鈕結構變更導致無法自動收合的問題
+- 更新選取器支援新版 `div#close-button > yt-button-renderer` 結構
+
 **v2.2** — Firefox 上架、統計修復、安全性優化
 - Firefox 版本送審 AMO（支援 Firefox 142+）
 - 新增 Firefox Developer Edition 手動安裝指南

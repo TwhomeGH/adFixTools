@@ -16,8 +16,80 @@
     let currentVideo = null;
     let timeUpdateHandler = null;
     let muteEnforcer = null;
+    let lastSkipBtnClick = 0;
+    let chatHideStyleEl = null;
 
-    const CLOSE_BTN_SEL = 'yt-live-chat-renderer #close-button, ytd-live-chat-frame #close-button, [aria-label="Close chat"], [aria-label="關閉聊天室"], yt-live-chat-renderer yt-icon-button#close-button, #chat:not([hidden]) yt-icon-button';
+    const CHAT_SEL = 'yt-live-chat-renderer,ytd-live-chat-frame,#chat,#chat-container,#live-chat,#chat-messages,yt-live-chat-frame';
+    const setChatHide = (on) => {
+        const observerWasActive = chatObserver !== null;
+        if (observerWasActive) chatObserver.disconnect();
+
+        const hide = (el) => {
+            el.style.setProperty('visibility', 'hidden', 'important');
+            el.style.setProperty('height', '0', 'important');
+            el.style.setProperty('width', '0', 'important');
+            el.style.setProperty('overflow', 'hidden', 'important');
+            el.style.setProperty('position', 'absolute', 'important');
+            el.style.setProperty('pointer-events', 'none', 'important');
+        };
+        const show = (el) => {
+            el.style.removeProperty('visibility');
+            el.style.removeProperty('height');
+            el.style.removeProperty('width');
+            el.style.removeProperty('overflow');
+            el.style.removeProperty('position');
+            el.style.removeProperty('pointer-events');
+        };
+        if (on) {
+            if (!chatHideStyleEl) {
+                chatHideStyleEl = document.createElement('style');
+                chatHideStyleEl.id = 'sks-chat-hide';
+                document.head.appendChild(chatHideStyleEl);
+            }
+            chatHideStyleEl.textContent = `${CHAT_SEL}{visibility:hidden!important;height:0!important;width:0!important;overflow:hidden!important;position:absolute!important;pointer-events:none!important}`;
+            document.querySelectorAll(CHAT_SEL).forEach(hide);
+        } else if (chatHideStyleEl) {
+            chatHideStyleEl.remove();
+            chatHideStyleEl = null;
+            document.querySelectorAll(CHAT_SEL).forEach(show);
+        }
+
+        if (observerWasActive && opts.hideChat) {
+            chatObserver.observe(document.body || document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+        }
+    };
+
+    const trustedClick = (el) => {
+        if (!el) return;
+        try {
+            const markId = '_sks_' + Date.now();
+            el.setAttribute('data-sks-click', markId);
+            const s = document.createElement('script');
+            s.textContent = `(function(){var e=document.querySelector('[data-sks-click="${markId}"]');if(e){try{e.click()}catch(e){}e.removeAttribute('data-sks-click');}})();`;
+            document.body.appendChild(s);
+            s.remove();
+        } catch(e) {
+            debug('trustedClick error', e);
+        }
+    };
+
+    const CLOSE_BTN_SEL = 'yt-live-chat-renderer #close-button, ytd-live-chat-frame #close-button, [aria-label="Close chat"], [aria-label="關閉聊天室"], yt-live-chat-renderer yt-icon-button#close-button, #chat:not([hidden]) yt-icon-button, yt-live-chat-header-renderer #close-button';
+    const CHAT_CLOSE_SEL = '#close-button, [aria-label="Close chat"], [aria-label="關閉聊天室"], [aria-label="關閉"], yt-icon-button#close-button';
+    const debugLogBtn = (label, el) => {
+        if (!opts.debugMode) return;
+        if (!el) { console.log(`[SkipAds:debug] ${label}: null`); return; }
+        const info = {
+            tag: el.tagName,
+            id: el.id,
+            className: el.className?.slice(0, 100),
+            ariaLabel: el.getAttribute('aria-label'),
+            text: el.textContent?.trim()?.slice(0, 50),
+            display: getComputedStyle(el).display,
+            visible: el.offsetWidth > 0 && el.offsetHeight > 0,
+            rect: el.getBoundingClientRect()
+        };
+        console.log(`[SkipAds:debug] ${label}:`, JSON.stringify(info), el.outerHTML?.slice(0, 300));
+    };
     let chatObserver = null;
     let chatTimer = null;
     let lastChatHideTime = 0;
@@ -26,14 +98,17 @@
     let lastChatVisible = false;
     let chatInitTime = 0;
     let chatWasVisibleAtInit = false;
+    let chatProcessing = false;
     const resumeAutoHide = () => {
         if (chatCooldownTimer) { clearTimeout(chatCooldownTimer); chatCooldownTimer = null; }
         chatPaused = false;
+        setChatHide(true);
         console.log('[SkipAds] Chat auto-hide resumed');
     };
     const pauseAutoHide = () => {
         const cd = opts.hideChatCooldown || 0;
         if (chatCooldownTimer) clearTimeout(chatCooldownTimer);
+        setChatHide(false);
         if (cd === 0) {
             chatPaused = true;
             console.log('[SkipAds] Chat auto-hide paused indefinitely (user opened chat)');
@@ -45,33 +120,37 @@
     };
     const hideLiveChat = () => {
         if (!opts.hideChat || chatPaused) return false;
-        if (Date.now() - lastChatHideTime < 1000) return false;
+        if (Date.now() - lastChatHideTime < 2000) return false;
         lastChatHideTime = Date.now();
         
-        const chat = document.querySelector('yt-live-chat-renderer, ytd-live-chat-frame, #chat, #chat-container, #live-chat, #chat-messages, yt-live-chat-frame');
+        const chat = document.querySelector(CHAT_SEL);
         if (!chat) return false;
-        const ytIconBtn = chat.querySelector('yt-icon-button#close-button');
-        const innerBtn = chat.querySelector('yt-icon-button#close-button button, #close-button button');
-        const anyBtn = chat.querySelector('[aria-label="Close chat"], [aria-label="關閉聊天室"]');
-        if (ytIconBtn) {
-            ytIconBtn.click();
-            console.log('[SkipAds] Live chat closed via yt-icon-button');
-        } else if (innerBtn) {
-            innerBtn.click();
-            console.log('[SkipAds] Live chat closed via inner button');
-        } else if (anyBtn) {
-            anyBtn.click();
-            console.log('[SkipAds] Live chat closed via aria-label');
-        } else {
-            console.log('[SkipAds] Close button not found, will retry');
-            return false;
+        
+        const container = chat.querySelector(CHAT_CLOSE_SEL);
+        debugLogBtn('hideLiveChat closeContainer', container);
+        const candidates = new Set();
+        if (container) {
+            const btn = container.querySelector('button');
+            if (btn) candidates.add(btn);
+            const shape = container.querySelector('yt-button-shape');
+            if (shape) candidates.add(shape);
+            const renderer = container.querySelector('yt-button-renderer');
+            if (renderer) candidates.add(renderer);
+            candidates.add(container);
         }
+        candidates.forEach(el => { el.focus(); trustedClick(el); });
+        
+        setChatHide(true);
+        console.log('[SkipAds] Live chat hidden');
         return true;
     };
     const isChatVisible = (chat) => {
-        return chat && chat.style.display !== 'none' && chat.offsetWidth > 0 && chat.offsetHeight > 0;
+        if (!chat) return false;
+        const s = getComputedStyle(chat);
+        return s.display !== 'none' && s.visibility !== 'hidden' && chat.offsetWidth > 0 && chat.offsetHeight > 0;
     };
     let chatRetryTimer = null;
+    let lastChatReLog = 0;
     const watchChat = () => {
         if (chatObserver) { chatObserver.disconnect(); chatObserver = null; }
         if (chatTimer) { clearInterval(chatTimer); chatTimer = null; }
@@ -80,14 +159,14 @@
         chatPaused = false;
         lastChatVisible = false;
         chatInitTime = Date.now();
-        const chatAtInit = document.querySelector('yt-live-chat-renderer, ytd-live-chat-frame, #chat, #chat-container, #live-chat, #chat-messages, yt-live-chat-frame');
+        const chatAtInit = document.querySelector(CHAT_SEL);
         const chatWasVisibleAtInit = isChatVisible(chatAtInit);
         if (!opts.hideChat) return;
         
         // 持續重試直到關閉成功
         const tryClose = () => {
             if (!opts.hideChat) return;
-            const chat = document.querySelector('yt-live-chat-renderer, ytd-live-chat-frame, #chat, #chat-container, #live-chat, #chat-messages, yt-live-chat-frame');
+            const chat = document.querySelector(CHAT_SEL);
             if (!chat) {
                 chatRetryTimer = setTimeout(tryClose, 500);
                 return;
@@ -102,7 +181,8 @@
         // 立即啟動 observer/interval，但前 3 秒不判定「用戶打開」
         chatTimer = setInterval(() => {
             if (!opts.hideChat || chatPaused) return;
-            const chat = document.querySelector('yt-live-chat-renderer, ytd-live-chat-frame, #chat, #chat-container, #live-chat, #chat-messages, yt-live-chat-frame');
+            setChatHide(true);
+            const chat = document.querySelector(CHAT_SEL);
             const visible = isChatVisible(chat);
             if (!visible) {
                 lastChatVisible = false;
@@ -114,17 +194,28 @@
                 pauseAutoHide();
             }
             lastChatVisible = true;
-            if (document.querySelector(CLOSE_BTN_SEL)) {
-                console.log('[SkipAds] Chat re-appeared, clicking close button');
+            const btn = chat?.querySelector(CHAT_CLOSE_SEL);
+            if (btn) {
+                if (Date.now() - lastChatReLog > 1000) {
+                    debugLogBtn('watchChat(interval) found CHAT_CLOSE_SEL', btn);
+                    console.log('[SkipAds] Chat re-appeared, clicking close button');
+                    lastChatReLog = Date.now();
+                }
                 hideLiveChat();
+            } else {
+                debug('[SkipAds:debug] watchChat(interval): chat visible but no close btn found');
             }
         }, 1000);
         chatObserver = new MutationObserver(() => {
             if (!opts.hideChat) { chatObserver.disconnect(); return; }
-            const chat = document.querySelector('yt-live-chat-renderer, ytd-live-chat-frame, #chat, #chat-container, #live-chat, #chat-messages, yt-live-chat-frame');
+            if (chatProcessing) return;
+            chatProcessing = true;
+            setChatHide(true);
+            const chat = document.querySelector(CHAT_SEL);
             const visible = isChatVisible(chat);
             if (!visible) {
                 lastChatVisible = false;
+                chatProcessing = false;
                 return;
             }
             const isInitialLoad = chatWasVisibleAtInit && Date.now() - chatInitTime < 3000;
@@ -133,10 +224,18 @@
                 pauseAutoHide();
             }
             lastChatVisible = true;
-            if (document.querySelector(CLOSE_BTN_SEL)) {
-                console.log('[SkipAds] Chat re-appeared, clicking close button');
+            const btn = chat?.querySelector(CHAT_CLOSE_SEL);
+            if (btn) {
+                if (Date.now() - lastChatReLog > 1000) {
+                    debugLogBtn('watchChat(mutation) found CHAT_CLOSE_SEL', btn);
+                    console.log('[SkipAds] Chat re-appeared, clicking close button');
+                    lastChatReLog = Date.now();
+                }
                 hideLiveChat();
+            } else {
+                debug('[SkipAds:debug] watchChat(mutation): chat visible but no close btn found');
             }
+            chatProcessing = false;
         });
         chatObserver.observe(document.body || document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
     };
@@ -214,17 +313,6 @@
         skipBtns.forEach(skipBtn => {
             const t = skipBtn.textContent.trim();
             if (t && t !== 'Skip ad' && t !== 'Skip' && t !== '略過') parts.push(t);
-
-            const btn = skipBtn.querySelector('button') || skipBtn;
-            ['mousedown', 'mouseup', 'click'].forEach(type => {
-                btn.dispatchEvent(new MouseEvent(type, {
-                    bubbles: true,
-                    cancelable: true,
-                    view: window,
-                    buttons: 1
-                }));
-            });
-            debug('Clicked skip button:', skipBtn.id || skipBtn.className);
         });
         const overlayTexts = [...document.querySelectorAll('.ytp-ad-player-overlay *')].map(e => e.textContent.trim()).filter(Boolean);
         parts.push(...overlayTexts);
@@ -369,7 +457,7 @@
             'button[aria-label*="聊天室" i]'
         );
         if (!chatOpenBtn) return;
-        const chat = document.querySelector('yt-live-chat-renderer, ytd-live-chat-frame, #chat, #chat-container, #live-chat, #chat-messages, yt-live-chat-frame');
+        const chat = document.querySelector(CHAT_SEL);
         if (!chat) return;
         pauseAutoHide();
         console.log('[SkipAds] User manually opened chat via button, pausing auto-hide');
@@ -443,29 +531,28 @@
 
             const skipBtn = findSkipBtn();
             if (skipBtn) {
-                debug('Attempting to click skip button', skipBtn, skipBtn.className, skipBtn.id, skipBtn.offsetWidth, skipBtn.offsetHeight, skipBtn.disabled, skipBtn.style.display, skipBtn.style.visibility);
-                const btn = skipBtn.querySelector('button') || skipBtn;
-                let rect = skipBtn.getBoundingClientRect();
-                let retries = 0;
-                while ((rect.width === 0 || rect.height === 0) && retries < 10) {
-                    await new Promise(r => setTimeout(r, 50));
-                    rect = skipBtn.getBoundingClientRect();
-                    retries++;
-                }
-                if (rect.width === 0 || rect.height === 0) {
-                    debug('Skip button not rendered after retries, skipping click');
+                debugLogBtn('findSkipBtn result', skipBtn);
+                const now = Date.now();
+                if (now - lastSkipBtnClick < 3000) {
+                    debug('Skip button click throttled');
                 } else {
-                    btn.focus();
-                    const cx = rect.left + rect.width / 2;
-                    const cy = rect.top + rect.height / 2;
-                    const baseOpts = { bubbles: true, cancelable: true, view: window, buttons: 1, clientX: cx, clientY: cy, screenX: cx + window.screenX, screenY: cy + window.screenY };
-                    const pointerOpts = { ...baseOpts, pointerId: 1, pointerType: 'mouse', isPrimary: true, width: 1, height: 1, pressure: 0.5 };
-                    ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click'].forEach(type => {
-                        const evt = type.startsWith('pointer') ? new PointerEvent(type, pointerOpts) : new MouseEvent(type, baseOpts);
-                        btn.dispatchEvent(evt);
-                    });
-                    btn.click();
-                    debug('Click events dispatched with coords', cx, cy);
+                    lastSkipBtnClick = now;
+                    const btn = skipBtn.querySelector('button') || skipBtn;
+                    let rect = skipBtn.getBoundingClientRect();
+                    let retries = 0;
+                    while ((rect.width === 0 || rect.height === 0) && retries < 10) {
+                        await new Promise(r => setTimeout(r, 50));
+                        rect = skipBtn.getBoundingClientRect();
+                        retries++;
+                    }
+                    if (rect.width === 0 || rect.height === 0) {
+                        debug('Skip button not rendered after retries, trying trustedClick anyway');
+                        btn.focus();
+                        trustedClick(btn);
+                    } else {
+                        btn.focus();
+                        trustedClick(btn);
+                    }
                 }
                 if (v.duration > 0 && v.currentTime < v.duration - 1) {
                     v.currentTime = v.duration - 0.5;
@@ -494,24 +581,23 @@
                 }
                 const hiddenBtn = document.querySelector('.ytp-ad-skip-button-modern, .ytp-ad-skip-button-slot button, .ytp-video-interstitial-buttoned-centered-layout button');
                 if (hiddenBtn) {
-                    debug('Force clicking hidden skip button', hiddenBtn, hiddenBtn.className, hiddenBtn.id);
-                    const btn = hiddenBtn.querySelector('button') || hiddenBtn;
-                    const rect = hiddenBtn.getBoundingClientRect();
-                    const cx = rect.left + rect.width / 2;
-                    const cy = rect.top + rect.height / 2;
-                    const opts_evt = { bubbles: true, cancelable: true, view: window, buttons: 1, clientX: cx, clientY: cy, screenX: cx + window.screenX, screenY: cy + window.screenY };
-                    ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click'].forEach(type => {
-                        btn.dispatchEvent(new (type.startsWith('pointer') ? PointerEvent : MouseEvent)(type, opts_evt));
-                    });
-                    debug('Force clicked hidden skip button with coords', cx, cy);
-                    const title = adTitle || getAdInfo();
-                    recordSkipStats(title, v);
-                    if (muteEnforcer) { clearInterval(muteEnforcer); muteEnforcer = null; }
-                    if (v) { v.playbackRate = 1; v.muted = adOriginalMuted; }
-                    wasAd = false;
-                    adTitle = '';
-                    inspectedAd = false;
-                    lastPrintedAd = '';
+                    debugLogBtn('hidden skip btn', hiddenBtn);
+                    const now = Date.now();
+                    if (now - lastSkipBtnClick < 3000) {
+                        debug('Hidden skip button click throttled');
+                    } else {
+                        lastSkipBtnClick = now;
+                        const btn = hiddenBtn.querySelector('button') || hiddenBtn;
+                        trustedClick(btn);
+                        const title = adTitle || getAdInfo();
+                        recordSkipStats(title, v);
+                        if (muteEnforcer) { clearInterval(muteEnforcer); muteEnforcer = null; }
+                        if (v) { v.playbackRate = 1; v.muted = adOriginalMuted; }
+                        wasAd = false;
+                        adTitle = '';
+                        inspectedAd = false;
+                        lastPrintedAd = '';
+                    }
                 } else {
                     debug('No hidden skip button found either');
                 }
