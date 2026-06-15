@@ -99,13 +99,15 @@ skipads/
 
 ## 版本紀錄
 
-**v2.2** — 聊天室控制、統計、深色模式、點擊優化
-- 新增直播聊天室自動隱藏與手動開啟冷卻機制
-- 新增跳過統計：總次數、節省時間、平均長度、歷史紀錄（50 筆）
-- 設定頁新增主題切換：跟隨系統 / 淺色 / 深色
-- 優化跳過按鈕點擊：完整滑鼠事件序列 + 座標 + 渲染等待重試
-- 靜音強制執行：廣告期間每 500ms 重新套用靜音（防 YouTube 重置）
-- 廣告偵測改用 `timeupdate` 事件，降低 CPU 佔用
+**v2.2** — Firefox 上架、統計修復、安全性優化
+- Firefox 版本送審 AMO（支援 Firefox 142+）
+- 新增 Firefox Developer Edition 手動安裝指南
+- 新增 `build-firefox.ps1` XPI 打包工具
+- 修復選項統計數據的渲染與設定的預設值（[#1](https://github.com/TwhomeGH/adFixTools/pull/1)）
+- 修復 AMO 審查：補齊 `data_collection_permissions`、移除 `innerHTML`
+- 統計歷史紀錄標題可點擊展開／收合
+- 新增 `docs/build-firefox.md` 打包文件
+- 新增捐款贊助資訊（PayPal / TikTok / 街口支付 / Twitch）
 
 **v2.1** — 遞增加速 & 廣告面板收納
 - 新增遞增加速模式：無法跳過的廣告自動加速 (2x→4x→6x→8x→16x→24x...)

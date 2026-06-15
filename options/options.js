@@ -106,8 +106,15 @@ function renderHistory(history) {
     row.style.cssText = 'padding:6px 0;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center';
 
     const title = document.createElement('div');
-    title.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    title.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer';
     title.textContent = h.title || 'Unknown ad';
+    title.title = h.title || 'Unknown ad';
+    title.onclick = () => {
+      const expanded = title.style.whiteSpace !== 'normal';
+      title.style.whiteSpace = expanded ? 'normal' : 'nowrap';
+      title.style.textOverflow = expanded ? 'clip' : 'ellipsis';
+      title.style.overflow = expanded ? 'visible' : 'hidden';
+    };
 
     const timeSaved = document.createElement('div');
     timeSaved.style.cssText = 'margin-left:12px;font-variant-numeric:tabular-nums';
