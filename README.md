@@ -3,7 +3,7 @@
 <p align="center">
   <img src="docs/adSetting.png" alt="設定頁面" width="45%">
   &nbsp;&nbsp;
-  <img src="docs/adInfo.png" alt="統計資訊" width="45%">
+  <img src="docs/adInfo2.png" alt="統計資訊" width="45%">
 </p>
 
 輕量級 Edge 擴充功能，自動跳過 YouTube 廣告，支援加速、靜音、首頁廣告封鎖。
