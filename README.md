@@ -57,6 +57,7 @@
 ## 技術說明
 
 - Manifest V3，僅需 `storage` 權限
+- 支援 Chrome / Edge（Chromium）與 Firefox 113+
 - 只作用於 `youtube.com`，不讀取其他網站
 - **無遠端設定**、**無追蹤**、**無唯一識別碼**
 - 使用 `timeupdate` 事件偵測廣告狀態（影片播放時觸發，每秒檢查一次），廣告面板用 2 秒輪詢
@@ -68,7 +69,10 @@
 
 ```
 skipads/
-├── manifest.json          # 擴充功能資訊
+├── manifest.json          # 擴充功能資訊（依瀏覽器切換）
+├── manifest-chrome.json   # Chrome/Edge 專用 manifest
+├── manifest-firefox.json  # Firefox 專用 manifest
+├── switch-browser.ps1     # 瀏覽器切換腳本
 ├── _locales/
 │   ├── en/messages.json   # English 翻譯
 │   └── zh/messages.json   # 繁體中文翻譯
