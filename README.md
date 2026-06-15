@@ -99,11 +99,14 @@ skipads/
 
 ## 版本紀錄
 
-**v2.3** — 穩定性修復 & CSP 相容性
+**v2.4** — 穩定性修復 & CSP 相容性
 - 修復 MutationObserver 無限迴圈導致 YouTube 頁面卡死的問題
 - 修復 `clickEl` 遺失函數導致跳過按鈕無法點擊的問題
 - 支援 `ytp-video-interstitial-buttoned-centered-layout` 新型廣告格式的略過按鈕
+- 修復 Extension context invalidated 錯誤（extension 更新後 `chrome.storage` 斷線）
 - 新增 CSP 政策已知限制說明（建議安裝 Disable CSP 插件）
+
+**v2.3** — 聊天室關閉修復
 - 修復 YouTube 聊天室按鈕結構變更導致無法自動收合的問題
 - 更新選取器支援新版 `div#close-button > yt-button-renderer` 結構
 

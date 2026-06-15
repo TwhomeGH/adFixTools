@@ -345,6 +345,7 @@
     };
 
     const recordSkipStats = (title, video) => {
+        try { if (!chrome.runtime?.id) return; } catch (e) { return; }
         let duration = 0;
         if (video && video.duration && video.duration > 0) {
             duration = Math.round(video.duration);
@@ -352,22 +353,24 @@
             duration = Math.round((Date.now() - adStartTime) / 1000);
         }
         const timeSaved = duration > 0 ? duration : 0;
-        chrome.storage.local.get(['skipStats'], (data) => {
-            const stats = data.skipStats || { totalSkips: 0, totalTimeSaved: 0, history: [] };
-            stats.totalSkips += 1;
-            stats.totalTimeSaved += timeSaved;
-            const entry = {
-                title: title || 'Unknown ad',
-                duration: duration,
-                timeSaved: timeSaved,
-                timestamp: Date.now()
-            };
-            stats.history.unshift(entry);
-            if (stats.history.length > MAX_STATS_HISTORY) {
-                stats.history = stats.history.slice(0, MAX_STATS_HISTORY);
-            }
-            chrome.storage.local.set({ skipStats: stats });
-        });
+        try {
+            chrome.storage.local.get(['skipStats'], (data) => {
+                const stats = data.skipStats || { totalSkips: 0, totalTimeSaved: 0, history: [] };
+                stats.totalSkips += 1;
+                stats.totalTimeSaved += timeSaved;
+                const entry = {
+                    title: title || 'Unknown ad',
+                    duration: duration,
+                    timeSaved: timeSaved,
+                    timestamp: Date.now()
+                };
+                stats.history.unshift(entry);
+                if (stats.history.length > MAX_STATS_HISTORY) {
+                    stats.history = stats.history.slice(0, MAX_STATS_HISTORY);
+                }
+                try { chrome.storage.local.set({ skipStats: stats }); } catch (e) {}
+            });
+        } catch (e) {}
     };
 
     const isVisible = (el) => {
