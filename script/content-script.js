@@ -7,10 +7,12 @@
     let toastEl = null;
     let adOverlayEl = null;
     let adTitle = '';
+    let adUrl = '';
     let adStartTime = 0;
     let inspectedAd = false;
     let lastPrintedAd = '';
     let adOriginalMuted = false;
+    let adOriginalMutedSaved = false;
     const panelCooldowns = new Map();
     const MAX_STATS_HISTORY = 50;
     let currentVideo = null;
@@ -327,6 +329,26 @@
         return 'Ad';
     };
 
+    const getAdUrl = () => {
+        const containers = '.ytp-ad-player-overlay-layout, .ytp-video-interstitial-buttoned-centered-layout, .ytp-ad-player-overlay, .video-ads';
+        const link = document.querySelector(`${containers} a[href]`);
+        if (link) {
+            const href = link.getAttribute('href');
+            if (href && (href.startsWith('http') || href.startsWith('//'))) return href;
+        }
+        for (const sel of ['.ytp-ad-destination', '.ytp-ad-avatar-lockup-card__description', '.ytp-ad-details-line__text--style-responsive']) {
+            const el = document.querySelector(sel);
+            if (el) {
+                const text = el.textContent.trim();
+                if (text) {
+                    if (text.startsWith('http')) return text;
+                    return `https://${text.replace(/^https?:\/\//, '')}`;
+                }
+            }
+        }
+        return '';
+    };
+
     const showToast = (title) => {
         if (!document.body || opts.showNotification === false) return;
         if (!toastEl) {
@@ -344,13 +366,13 @@
         setTimeout(() => { if (toastEl) toastEl.style.opacity = '0'; }, 2500);
     };
 
-    const recordSkipStats = (title, video) => {
+    const recordSkipStats = (title, video, url) => {
         try { if (!chrome.runtime?.id) return; } catch (e) { return; }
         let duration = 0;
-        if (video && video.duration && video.duration > 0) {
-            duration = Math.round(video.duration);
-        } else if (adStartTime > 0) {
+        if (adStartTime > 0) {
             duration = Math.round((Date.now() - adStartTime) / 1000);
+        } else if (video && video.duration && video.duration > 0) {
+            duration = Math.round(video.duration);
         }
         const timeSaved = duration > 0 ? duration : 0;
         try {
@@ -362,7 +384,8 @@
                     title: title || 'Unknown ad',
                     duration: duration,
                     timeSaved: timeSaved,
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
+                    url: url || ''
                 };
                 stats.history.unshift(entry);
                 if (stats.history.length > MAX_STATS_HISTORY) {
@@ -490,13 +513,18 @@
             if (opts.hideChat && !chatPaused) hideLiveChat();
             if (!wasAd) {
                     adTitle = '';
+                    adUrl = '';
                     adStartTime = Date.now();
                     inspectedAd = false;
-                    adOriginalMuted = v.muted;
+                    if (!adOriginalMutedSaved) {
+                        adOriginalMuted = v.muted;
+                        adOriginalMutedSaved = true;
+                    }
                     updateAdOverlay('\u23ED Ad...');
                 }
             if (!adTitle) {
                 adTitle = getAdInfo();
+                adUrl = getAdUrl();
                 if (adTitle) {
                     updateAdOverlay('\u23ED ' + adTitle);
                     if (adTitle !== lastPrintedAd) {
@@ -565,13 +593,15 @@
                     const title = adTitle || getAdInfo();
                     console.log('[SkipAds] Skipped, title:', title);
                     showToast(title);
-                    recordSkipStats(title, v);
+                    recordSkipStats(title, v, adUrl);
                     if (muteEnforcer) { clearInterval(muteEnforcer); muteEnforcer = null; }
                     if (v) { v.playbackRate = 1; v.muted = adOriginalMuted; }
                     wasAd = false;
                     adTitle = '';
+                    adUrl = '';
                     inspectedAd = false;
                     lastPrintedAd = '';
+                    adOriginalMutedSaved = false;
                 }
             } else {
                 if (opts.debugMode && !inspectedAd) {
@@ -593,13 +623,15 @@
                         const btn = hiddenBtn.querySelector('button') || hiddenBtn;
                         trustedClick(btn);
                         const title = adTitle || getAdInfo();
-                        recordSkipStats(title, v);
+                        recordSkipStats(title, v, adUrl);
                         if (muteEnforcer) { clearInterval(muteEnforcer); muteEnforcer = null; }
                         if (v) { v.playbackRate = 1; v.muted = adOriginalMuted; }
                         wasAd = false;
                         adTitle = '';
+                        adUrl = '';
                         inspectedAd = false;
                         lastPrintedAd = '';
+                        adOriginalMutedSaved = false;
                     }
                 } else {
                     debug('No hidden skip button found either');
@@ -610,11 +642,16 @@
         if (!isAd) {
             if (wasAd) {
                 wasAd = false;
-                const title = adTitle || getAdInfo();
-                recordSkipStats(title, v);
+                const adElapsed = Date.now() - adStartTime;
+                if (adElapsed >= 1000) {
+                    const title = adTitle || getAdInfo();
+                    recordSkipStats(title, v, adUrl);
+                }
                 adTitle = '';
+                adUrl = '';
                 inspectedAd = false;
                 lastPrintedAd = '';
+                adOriginalMutedSaved = false;
                 if (muteEnforcer) { clearInterval(muteEnforcer); muteEnforcer = null; }
                 if (v) { v.playbackRate = 1; v.muted = adOriginalMuted; }
             }
@@ -640,9 +677,32 @@
         debug('Attached timeupdate listener to video');
     };
 
+    let adClassObserver = null;
+
+    const setupAdClassObserver = (p) => {
+        if (adClassObserver) adClassObserver.disconnect();
+        adClassObserver = new MutationObserver((mutations) => {
+            for (const m of mutations) {
+                if (m.type === 'attributes' && m.attributeName === 'class' && m.target.classList.contains('ad-showing') && opts.muteAd !== false) {
+                    const v = m.target.querySelector('video');
+                    if (v && !v.muted) {
+                        if (!adOriginalMutedSaved) {
+                            adOriginalMuted = v.muted;
+                            adOriginalMutedSaved = true;
+                        }
+                        v.muted = true;
+                        debug('Ad class observer: instant mute');
+                    }
+                }
+            }
+        });
+        adClassObserver.observe(p, { attributes: true, attributeFilter: ['class'] });
+    };
+
     const checkVideo = () => {
         const p = document.querySelector('#movie_player');
         if (!p) return;
+        if (!adClassObserver) setupAdClassObserver(p);
         const v = p.querySelector('video');
         if (v && v !== currentVideo) attachTimeUpdate(v);
     };
@@ -689,6 +749,7 @@
         if ('hideChat' in changes || 'hideChatCooldown' in changes) watchChat();
         if ('enabled' in changes && !changes.enabled.newValue) {
             wasAd = false;
+            adOriginalMutedSaved = false;
             updateAdOverlay('');
             if (muteEnforcer) { clearInterval(muteEnforcer); muteEnforcer = null; }
             const v = document.querySelector('#movie_player video');

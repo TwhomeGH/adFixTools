@@ -1,5 +1,11 @@
 # SkipAds — YouTube Ad Skipper
 
+<p align="center">
+  <img src="docs/adSetting.png" alt="設定頁面" width="45%">
+  &nbsp;&nbsp;
+  <img src="docs/adInfo.png" alt="統計資訊" width="45%">
+</p>
+
 輕量級 Edge 擴充功能，自動跳過 YouTube 廣告，支援加速、靜音、首頁廣告封鎖。
 
 ## 理念
@@ -104,6 +110,10 @@ skipads/
 - 修復 `clickEl` 遺失函數導致跳過按鈕無法點擊的問題
 - 支援 `ytp-video-interstitial-buttoned-centered-layout` 新型廣告格式的略過按鈕
 - 修復 Extension context invalidated 錯誤（extension 更新後 `chrome.storage` 斷線）
+- 修復統計時間錯誤：廣告結束後誤讀主影片長度（如 150h 直播）導致節省時間暴增
+- 修復廣告靜音誤觸主影片：Observer 搶在 `adOriginalMuted` 捕捉前靜音，導致廣告結束後主影片持續靜音
+- 新增廣告目標連結記錄：自動抓取廣告落地網址，可在統計紀錄中點擊跳轉
+- 新增頁面載入假性廣告過濾：廣告持續不足 1 秒不計入統計，避免導航期間誤報
 - 新增 CSP 政策已知限制說明（建議安裝 Disable CSP 插件）
 
 **v2.3** — 聊天室關閉修復

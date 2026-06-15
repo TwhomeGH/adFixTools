@@ -105,8 +105,11 @@ function renderHistory(history) {
     const row = document.createElement('div');
     row.style.cssText = 'padding:6px 0;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center';
 
+    const left = document.createElement('div');
+    left.style.cssText = 'flex:1;overflow:hidden;display:flex;flex-direction:column;min-width:0';
+
     const title = document.createElement('div');
-    title.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer';
+    title.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer';
     title.textContent = h.title || 'Unknown ad';
     title.title = h.title || 'Unknown ad';
     title.onclick = () => {
@@ -115,16 +118,28 @@ function renderHistory(history) {
       title.style.textOverflow = expanded ? 'clip' : 'ellipsis';
       title.style.overflow = expanded ? 'visible' : 'hidden';
     };
+    left.appendChild(title);
+
+    if (h.url) {
+      const link = document.createElement('a');
+      link.textContent = h.url;
+      link.href = h.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.style.cssText = 'font-size:11px;color:var(--stat-color);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block';
+      link.title = h.url;
+      left.appendChild(link);
+    }
 
     const timeSaved = document.createElement('div');
-    timeSaved.style.cssText = 'margin-left:12px;font-variant-numeric:tabular-nums';
+    timeSaved.style.cssText = 'margin-left:12px;font-variant-numeric:tabular-nums;flex-shrink:0';
     timeSaved.textContent = formatTime(h.timeSaved || 0);
 
     const timestamp = document.createElement('div');
-    timestamp.style.cssText = 'margin-left:12px;color:#999;font-size:11px';
+    timestamp.style.cssText = 'margin-left:12px;color:#999;font-size:11px;flex-shrink:0';
     timestamp.textContent = h.timestamp ? new Date(h.timestamp).toLocaleString() : '';
 
-    row.append(title, timeSaved, timestamp);
+    row.append(left, timeSaved, timestamp);
     container.appendChild(row);
   });
 }
