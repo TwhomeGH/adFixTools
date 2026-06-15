@@ -536,6 +536,22 @@
                             document.querySelector('.ytp-ad-survey') ? 'survey' : 'unknown';
                         debug('ad format:', adLayout);
                         debug('badge text:', [...document.querySelectorAll('.ytp-ad-badge, .ytp-ad-simple-ad-badge, .ytp-ad-badge__text--clean-player, .ad-simple-attributed-string')].map(e => e.textContent.trim()).filter(Boolean).join(', '));
+                        const player = document.querySelector('#movie_player');
+                        if (player) {
+                            debug('player class:', player.className);
+                            debug('player style:', player.getAttribute('style'));
+                            const pRect = player.getBoundingClientRect();
+                            debug('player rect:', JSON.stringify({w:pRect.width,h:pRect.height,l:pRect.left,t:pRect.top}));
+                            if (v) {
+                                const vRect = v.getBoundingClientRect();
+                                debug('video rect:', JSON.stringify({w:vRect.width,h:vRect.height,l:vRect.left,t:vRect.top}));
+                            }
+                        }
+                        const watchFlexy = document.querySelector('ytd-watch-flexy');
+                        if (watchFlexy) {
+                            debug('watch-flexy class:', watchFlexy.className);
+                            debug('watch-flexy style:', watchFlexy.getAttribute('style'));
+                        }
                         console.log('[SkipAds] Ad info:', adTitle);
                     }
                 }
@@ -692,6 +708,13 @@
                         }
                         v.muted = true;
                         debug('Ad class observer: instant mute');
+                        if (opts.debugMode) {
+                            const pRect = m.target.getBoundingClientRect();
+                            const vRect = v.getBoundingClientRect();
+                            debug('observer player rect:', JSON.stringify({w:pRect.width,h:pRect.height,l:pRect.left,t:pRect.top}));
+                            debug('observer video rect:', JSON.stringify({w:vRect.width,h:vRect.height,l:vRect.left,t:vRect.top}));
+                            debug('player class (observer):', m.target.className);
+                        }
                     }
                 }
             }
