@@ -105,6 +105,14 @@ skipads/
 
 ## 版本紀錄
 
+**v2.5** — 聊天室自動隱藏重寫
+- 修復聊天室隱藏打錯靶的問題：selector 從 `#panels-full-bleed-container` 改為 `#chat-container, #panels-full-bleed-container`（聊天室實際在 `#chat-container` 內的 iframe）
+- 改用 `visibility: hidden; height: 0` 取代 `display: none`，避免觸發 YouTube 版面重排導致影片卡住
+- 新增三重保護機制：document 層級 DOM observer + 元素 style observer + 2 秒 interval 備份
+- 修復 SPA 導航後「開啟面板」按鈕消失的問題（`setChatHide` 自動確保按鈕存在）
+- 修復 `watchChat` 被重複呼叫導致 observer/interval 不斷重建的問題
+- 隱藏後觸發 `resize` 事件 + 強制 reflow 加速 YouTube 版面更新
+
 **v2.4** — 穩定性修復 & CSP 相容性
 - 修復 MutationObserver 無限迴圈導致 YouTube 頁面卡死的問題
 - 修復 `clickEl` 遺失函數導致跳過按鈕無法點擊的問題

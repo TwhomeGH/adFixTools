@@ -19,64 +19,37 @@
     let timeUpdateHandler = null;
     let muteEnforcer = null;
     let lastSkipBtnClick = 0;
-    let chatHideStyleEl = null;
+    const CHAT_CONTAINER_SEL = '#chat-container, #panels-full-bleed-container';
 
-    const CHAT_SEL = 'yt-live-chat-renderer,ytd-live-chat-frame,#chat,#chat-container,#live-chat,#chat-messages,yt-live-chat-frame';
+    const CHAT_HIDE = ['visibility', 'height', 'min-height', 'max-height', 'overflow', 'padding', 'margin', 'border', 'flex'];
+    const forceLayout = () => {
+        window.dispatchEvent(new Event('resize'));
+        void document.documentElement.offsetHeight;
+    };
     const setChatHide = (on) => {
-        const observerWasActive = chatObserver !== null;
-        if (observerWasActive) chatObserver.disconnect();
-
-        const hide = (el) => {
-            el.style.setProperty('visibility', 'hidden', 'important');
-            el.style.setProperty('height', '0', 'important');
-            el.style.setProperty('width', '0', 'important');
-            el.style.setProperty('overflow', 'hidden', 'important');
-            el.style.setProperty('position', 'absolute', 'important');
-            el.style.setProperty('pointer-events', 'none', 'important');
-        };
-        const show = (el) => {
-            el.style.removeProperty('visibility');
-            el.style.removeProperty('height');
-            el.style.removeProperty('width');
-            el.style.removeProperty('overflow');
-            el.style.removeProperty('position');
-            el.style.removeProperty('pointer-events');
-        };
-        if (on) {
-            if (!chatHideStyleEl) {
-                chatHideStyleEl = document.createElement('style');
-                chatHideStyleEl.id = 'sks-chat-hide';
-                document.head.appendChild(chatHideStyleEl);
+        const all = document.querySelectorAll(CHAT_CONTAINER_SEL);
+        if (!all.length) return;
+        for (const el of all) {
+            if (on) {
+                el.style.setProperty('visibility', 'hidden', 'important');
+                el.style.setProperty('height', '0', 'important');
+                el.style.setProperty('min-height', '0', 'important');
+                el.style.setProperty('max-height', '0', 'important');
+                el.style.setProperty('overflow', 'hidden', 'important');
+                el.style.setProperty('padding', '0', 'important');
+                el.style.setProperty('margin', '0', 'important');
+                el.style.setProperty('border', '0', 'important');
+                el.style.setProperty('flex', '0 0 0', 'important');
+                attachChatStyleObserver(el);
+                showPanelBtn();
+            } else {
+                if (chatStyleObserver) { chatStyleObserver.disconnect(); chatStyleObserver = null; }
+                for (const p of CHAT_HIDE) el.style.removeProperty(p);
             }
-            chatHideStyleEl.textContent = `${CHAT_SEL}{visibility:hidden!important;height:0!important;width:0!important;overflow:hidden!important;position:absolute!important;pointer-events:none!important}`;
-            document.querySelectorAll(CHAT_SEL).forEach(hide);
-        } else if (chatHideStyleEl) {
-            chatHideStyleEl.remove();
-            chatHideStyleEl = null;
-            document.querySelectorAll(CHAT_SEL).forEach(show);
         }
-
-        if (observerWasActive && opts.hideChat) {
-            chatObserver.observe(document.body || document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
-        }
+        if (on) { if (opts.debugMode) debug('Chat hidden'); forceLayout(); }
     };
 
-    const trustedClick = (el) => {
-        if (!el) return;
-        try {
-            const markId = '_sks_' + Date.now();
-            el.setAttribute('data-sks-click', markId);
-            const s = document.createElement('script');
-            s.textContent = `(function(){var e=document.querySelector('[data-sks-click="${markId}"]');if(e){try{e.click()}catch(e){}e.removeAttribute('data-sks-click');}})();`;
-            document.body.appendChild(s);
-            s.remove();
-        } catch(e) {
-            debug('trustedClick error', e);
-        }
-    };
-
-    const CLOSE_BTN_SEL = 'yt-live-chat-renderer #close-button, ytd-live-chat-frame #close-button, [aria-label="Close chat"], [aria-label="關閉聊天室"], yt-live-chat-renderer yt-icon-button#close-button, #chat:not([hidden]) yt-icon-button, yt-live-chat-header-renderer #close-button';
-    const CHAT_CLOSE_SEL = '#close-button, [aria-label="Close chat"], [aria-label="關閉聊天室"], [aria-label="關閉"], yt-icon-button#close-button';
     const debugLogBtn = (label, el) => {
         if (!opts.debugMode) return;
         if (!el) { console.log(`[SkipAds:debug] ${label}: null`); return; }
@@ -92,154 +65,152 @@
         };
         console.log(`[SkipAds:debug] ${label}:`, JSON.stringify(info), el.outerHTML?.slice(0, 300));
     };
-    let chatObserver = null;
+    const trustedClick = (el) => {
+        if (!el) return;
+        try {
+            const markId = '_sks_' + Date.now();
+            el.setAttribute('data-sks-click', markId);
+            const s = document.createElement('script');
+            s.textContent = `(function(){var e=document.querySelector('[data-sks-click="${markId}"]');if(e){try{e.click()}catch(e){}e.removeAttribute('data-sks-click');}})();`;
+            document.body.appendChild(s);
+            s.remove();
+        } catch(e) {
+            debug('trustedClick error', e);
+        }
+    };
+
     let chatTimer = null;
-    let lastChatHideTime = 0;
     let chatCooldownTimer = null;
     let chatPaused = false;
-    let lastChatVisible = false;
-    let chatInitTime = 0;
-    let chatWasVisibleAtInit = false;
-    let chatProcessing = false;
+    let panelReplaceBtn = null;
+    let chatStyleObserver = null;
+    let chatDomObserver = null;
+    const setupChatObservers = () => {
+        teardownChatObservers();
+        chatDomObserver = new MutationObserver((mutations) => {
+            if (!opts.hideChat || chatPaused) return;
+            for (const m of mutations) {
+                if (m.type !== 'childList') continue;
+                for (const n of m.addedNodes) {
+                    if (n.nodeType === 1) {
+                        if (n.matches && n.matches(CHAT_CONTAINER_SEL)) { setChatHide(true); return; }
+                        const inner = n.querySelector && n.querySelector(CHAT_CONTAINER_SEL);
+                        if (inner) { setChatHide(true); return; }
+                    }
+                }
+            }
+        });
+        chatDomObserver.observe(document.documentElement, { childList: true, subtree: true });
+    };
+    const attachChatStyleObserver = (el) => {
+        if (!el) return;
+        if (chatStyleObserver) chatStyleObserver.disconnect();
+        chatStyleObserver = new MutationObserver(() => {
+            if (!opts.hideChat || chatPaused) return;
+            if (el.style.visibility !== 'hidden' || el.style.height !== '0px') setChatHide(true);
+        });
+        chatStyleObserver.observe(el, { attributes: true, attributeFilter: ['style'] });
+    };
+    const teardownChatObservers = () => {
+        if (chatStyleObserver) { chatStyleObserver.disconnect(); chatStyleObserver = null; }
+        if (chatDomObserver) { chatDomObserver.disconnect(); chatDomObserver = null; }
+    };
     const resumeAutoHide = () => {
         if (chatCooldownTimer) { clearTimeout(chatCooldownTimer); chatCooldownTimer = null; }
         chatPaused = false;
         setChatHide(true);
+        showPanelBtn();
         console.log('[SkipAds] Chat auto-hide resumed');
     };
     const pauseAutoHide = () => {
         const cd = opts.hideChatCooldown || 0;
         if (chatCooldownTimer) clearTimeout(chatCooldownTimer);
+        chatPaused = true;
         setChatHide(false);
-        if (cd === 0) {
-            chatPaused = true;
-            console.log('[SkipAds] Chat auto-hide paused indefinitely (user opened chat)');
-        } else {
-            chatPaused = true;
+        removePanelBtn();
+        if (cd !== 0) {
             chatCooldownTimer = setTimeout(resumeAutoHide, cd * 1000);
             console.log(`[SkipAds] Chat auto-hide paused for ${cd}s`);
+        } else {
+            console.log('[SkipAds] Chat auto-hide paused indefinitely');
         }
+    };
+    const showPanelBtn = () => {
+        const ytText = document.querySelector('yt-text-carousel-item-view-model');
+        if (!ytText) return;
+        const origBtn = ytText.querySelector('button-view-model.ytSpecButtonViewModelHost');
+        if (origBtn) origBtn.style.setProperty('display', 'none', 'important');
+        if (panelReplaceBtn && panelReplaceBtn.isConnected) return;
+        panelReplaceBtn = document.createElement('button');
+        panelReplaceBtn.id = 'sks-panel-btn';
+        panelReplaceBtn.textContent = '開啟面板';
+        panelReplaceBtn.style.cssText = [
+            'cursor:pointer', 'background:#ff4444', 'color:#fff',
+            'border:none', 'border-radius:20px', 'padding:6px 16px',
+            'font-size:13px', 'white-space:nowrap', 'line-height:normal',
+            'margin-left:8px', 'flex-shrink:0'
+        ].join(';');
+        panelReplaceBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            pauseAutoHide();
+        });
+        ytText.appendChild(panelReplaceBtn);
+    };
+    const removePanelBtn = () => {
+        if (panelReplaceBtn && panelReplaceBtn.isConnected) panelReplaceBtn.remove();
+        panelReplaceBtn = null;
+        const origBtn = document.querySelector('yt-text-carousel-item-view-model button-view-model.ytSpecButtonViewModelHost');
+        if (origBtn) origBtn.style.removeProperty('display');
     };
     const hideLiveChat = () => {
         if (!opts.hideChat || chatPaused) return false;
-        if (Date.now() - lastChatHideTime < 2000) return false;
-        lastChatHideTime = Date.now();
-        
-        const chat = document.querySelector(CHAT_SEL);
-        if (!chat) return false;
-        
-        const container = chat.querySelector(CHAT_CLOSE_SEL);
-        debugLogBtn('hideLiveChat closeContainer', container);
-        const candidates = new Set();
-        if (container) {
-            const btn = container.querySelector('button');
-            if (btn) candidates.add(btn);
-            const shape = container.querySelector('yt-button-shape');
-            if (shape) candidates.add(shape);
-            const renderer = container.querySelector('yt-button-renderer');
-            if (renderer) candidates.add(renderer);
-            candidates.add(container);
-        }
-        candidates.forEach(el => { el.focus(); trustedClick(el); });
-        
+        const el = document.querySelector(CHAT_CONTAINER_SEL);
+        if (!el) return false;
         setChatHide(true);
+        showPanelBtn();
         console.log('[SkipAds] Live chat hidden');
         return true;
     };
-    const isChatVisible = (chat) => {
-        if (!chat) return false;
-        const s = getComputedStyle(chat);
-        return s.display !== 'none' && s.visibility !== 'hidden' && chat.offsetWidth > 0 && chat.offsetHeight > 0;
-    };
-    let chatRetryTimer = null;
-    let lastChatReLog = 0;
     const watchChat = () => {
-        if (chatObserver) { chatObserver.disconnect(); chatObserver = null; }
-        if (chatTimer) { clearInterval(chatTimer); chatTimer = null; }
-        if (chatCooldownTimer) { clearTimeout(chatCooldownTimer); chatCooldownTimer = null; }
-        if (chatRetryTimer) { clearTimeout(chatRetryTimer); chatRetryTimer = null; }
         chatPaused = false;
-        lastChatVisible = false;
-        chatInitTime = Date.now();
-        const chatAtInit = document.querySelector(CHAT_SEL);
-        const chatWasVisibleAtInit = isChatVisible(chatAtInit);
-        if (!opts.hideChat) return;
-        
-        // 持續重試直到關閉成功
-        const tryClose = () => {
-            if (!opts.hideChat) return;
-            const chat = document.querySelector(CHAT_SEL);
-            if (!chat) {
-                chatRetryTimer = setTimeout(tryClose, 500);
-                return;
-            }
-            const closed = hideLiveChat();
-            if (!closed) {
-                chatRetryTimer = setTimeout(tryClose, 500);
-            }
-        };
-        tryClose();
-        
-        // 立即啟動 observer/interval，但前 3 秒不判定「用戶打開」
-        chatTimer = setInterval(() => {
+        if (chatCooldownTimer) { clearTimeout(chatCooldownTimer); chatCooldownTimer = null; }
+
+        if (!opts.hideChat) {
+            teardownChatObservers();
+            if (chatTimer) { clearInterval(chatTimer); chatTimer = null; }
+            setChatHide(false);
+            removePanelBtn();
+            return;
+        }
+
+        if (!chatDomObserver) {
+            setupChatObservers();
+            chatTimer = setInterval(() => {
+                if (!opts.hideChat || chatPaused) return;
+                const els = document.querySelectorAll(CHAT_CONTAINER_SEL);
+                if (!els.length) return;
+                for (const el of els) {
+                    if (el.style.visibility !== 'hidden' || el.style.height !== '0px') {
+                        setChatHide(true);
+                        return;
+                    }
+                }
+            }, 2000);
+        }
+
+        const doHide = () => {
             if (!opts.hideChat || chatPaused) return;
+            if (!document.querySelector(CHAT_CONTAINER_SEL)) return false;
             setChatHide(true);
-            const chat = document.querySelector(CHAT_SEL);
-            const visible = isChatVisible(chat);
-            if (!visible) {
-                lastChatVisible = false;
-                return;
-            }
-            const isInitialLoad = chatWasVisibleAtInit && Date.now() - chatInitTime < 3000;
-            if (!lastChatVisible && !isInitialLoad) {
-                console.log('[SkipAds] User opened chat, pausing auto-hide');
-                pauseAutoHide();
-            }
-            lastChatVisible = true;
-            const btn = chat?.querySelector(CHAT_CLOSE_SEL);
-            if (btn) {
-                if (Date.now() - lastChatReLog > 1000) {
-                    debugLogBtn('watchChat(interval) found CHAT_CLOSE_SEL', btn);
-                    console.log('[SkipAds] Chat re-appeared, clicking close button');
-                    lastChatReLog = Date.now();
-                }
-                hideLiveChat();
-            } else {
-                debug('[SkipAds:debug] watchChat(interval): chat visible but no close btn found');
-            }
-        }, 1000);
-        chatObserver = new MutationObserver(() => {
-            if (!opts.hideChat) { chatObserver.disconnect(); return; }
-            if (chatProcessing) return;
-            chatProcessing = true;
-            setChatHide(true);
-            const chat = document.querySelector(CHAT_SEL);
-            const visible = isChatVisible(chat);
-            if (!visible) {
-                lastChatVisible = false;
-                chatProcessing = false;
-                return;
-            }
-            const isInitialLoad = chatWasVisibleAtInit && Date.now() - chatInitTime < 3000;
-            if (!lastChatVisible && !isInitialLoad) {
-                console.log('[SkipAds] User opened chat, pausing auto-hide');
-                pauseAutoHide();
-            }
-            lastChatVisible = true;
-            const btn = chat?.querySelector(CHAT_CLOSE_SEL);
-            if (btn) {
-                if (Date.now() - lastChatReLog > 1000) {
-                    debugLogBtn('watchChat(mutation) found CHAT_CLOSE_SEL', btn);
-                    console.log('[SkipAds] Chat re-appeared, clicking close button');
-                    lastChatReLog = Date.now();
-                }
-                hideLiveChat();
-            } else {
-                debug('[SkipAds:debug] watchChat(mutation): chat visible but no close btn found');
-            }
-            chatProcessing = false;
-        });
-        chatObserver.observe(document.body || document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+            showPanelBtn();
+            return true;
+        };
+
+        if (!doHide()) {
+            setTimeout(() => {
+                if (!doHide()) setTimeout(doHide, 500);
+            }, 500);
+        }
     };
 
     const updateAdOverlay = (text) => {
@@ -468,26 +439,7 @@
         console.log('[SkipAds] User toggled ad panel, cooldown ' + collapseCooldown + 's');
     });
 
-    document.addEventListener('click', (e) => {
-        if (!opts.hideChat) return;
-        const chatOpenBtn = e.target.closest(
-            'ytSpecButtonViewModelHost button, ' +
-            'ytTextCarouselItemViewModelButton button, ' +
-            'ytSpecButtonViewModelHost, ' +
-            'ytTextCarouselItemViewModelButton, ' +
-            '[aria-label*="hat" i], ' +
-            '[aria-label*="聊天" i], ' +
-            '[tooltip*="hat" i], ' +
-            '[tooltip*="聊天" i], ' +
-            'button[aria-label*="Chat" i], ' +
-            'button[aria-label*="聊天室" i]'
-        );
-        if (!chatOpenBtn) return;
-        const chat = document.querySelector(CHAT_SEL);
-        if (!chat) return;
-        pauseAutoHide();
-        console.log('[SkipAds] User manually opened chat via button, pausing auto-hide');
-    });
+
 
     const handleSurveyAd = () => {
         const survey = document.querySelector('.ytp-ad-survey');
@@ -749,7 +701,7 @@
                 const p = document.querySelector('#movie_player');
                 const v = p?.querySelector('video');
                 if (p && v) checkAdAndSkip(v, p);
-                if (opts.hideChat && !chatPaused) hideLiveChat();
+                if (opts.hideChat) { chatPaused = false; hideLiveChat(); }
             }, 300);
         }
     }, true);
