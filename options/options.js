@@ -82,17 +82,28 @@ function formatTime(seconds) {
 
 function renderHistory(history) {
   const container = $('statsHistory');
+  container.textContent = '';
   if (!history.length) {
     container.textContent = i18n('opts_statsHistoryEmpty');
     return;
   }
-  container.innerHTML = history.map(h => `
-    <div style="padding:6px 0;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center">
-      <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.title}</div>
-      <div style="margin-left:12px;font-variant-numeric:tabular-nums">${formatTime(h.timeSaved)}</div>
-      <div style="margin-left:12px;color:#999;font-size:11px">${new Date(h.timestamp).toLocaleString()}</div>
-    </div>
-  `).join('');
+  for (const h of history) {
+    const row = document.createElement('div');
+    row.style.cssText = 'padding:6px 0;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center';
+    const title = document.createElement('div');
+    title.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    title.textContent = h.title;
+    row.appendChild(title);
+    const time = document.createElement('div');
+    time.style.cssText = 'margin-left:12px;font-variant-numeric:tabular-nums';
+    time.textContent = formatTime(h.timeSaved);
+    row.appendChild(time);
+    const date = document.createElement('div');
+    date.style.cssText = 'margin-left:12px;color:#999;font-size:11px';
+    date.textContent = new Date(h.timestamp).toLocaleString();
+    row.appendChild(date);
+    container.appendChild(row);
+  }
 }
 
 $('btn_clearStats').onclick = () => {

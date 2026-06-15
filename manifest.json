@@ -8,6 +8,13 @@
     },
     "default_locale": "en",
 
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "skipads@twhome.github.io",
+            "strict_min_version": "113.0"
+        }
+    },
+
     "permissions": [
         "storage"
     ],
@@ -23,7 +30,7 @@
         }
     ],
     "background": {
-        "service_worker": "script/background.js"
+        "scripts": ["script/background.js"]
     },
     "action": {},
     "options_ui": {

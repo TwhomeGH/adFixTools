@@ -4,7 +4,8 @@
 
 - Microsoft Edge（Chromium 核心）
 - 或任何 Chromium 瀏覽器（Chrome、Brave、Opera 等）
-- Mozilla Firefox 113 以上（需切換為 Firefox 專用 manifest）
+- Mozilla Firefox 142 以上
+- Firefox Developer Edition 或 Nightly（適用手動安裝方式）
 
 ## 安裝步驟
 
@@ -38,36 +39,50 @@ edge://extensions
 
 ---
 
-### Firefox 前置步驟
+## Firefox 安裝
 
-Firefox 使用不同的背景執行架構，需先切換 manifest 再載入。
+### 方式一：直接從附加元件商店安裝（推薦）
 
-如果要在 Edge 和 Firefox **同時**安裝，用 `-Target all` 一次產生兩個資料夾：
+SkipAds 已在 Firefox 附加元件商店（AMO）上架中。上架完成後，你可以在 Firefox 的附加元件管理員搜尋 **"SkipAds"** 或直接前往商店頁面安裝，安裝後會自動永久保留，重開 Firefox 也不會消失。
+
+🔗 商店連結：（上架後補上）
+
+### 方式二：使用 Firefox Developer Edition（手動永久安裝）
+
+如果你不想等待上架審核，可改用 Firefox Developer Edition（與正式版可並存）來永久安裝：
+
+1. 下載 [Firefox Developer Edition](https://www.mozilla.org/firefox/developer/)
+2. 安裝完成後，在網址列輸入 `about:config`
+3. 搜尋 `xpinstall.signatures.required`，點兩下設為 **`false`**
+4. 執行以下指令從專案目錄產出 Firefox 專用資料夾：
 
 ```powershell
-# 在專案目錄執行，產生 adFixTools-chrome/ 與 adFixTools-firefox/
-.\switch-browser.ps1 -Target all
+.\switch-browser.ps1 -Target firefox
 ```
 
-- `adFixTools-chrome/` → 載入 Edge
-- `adFixTools-firefox/` → 載入 Firefox
-
-如果只想單一資料夾輪流切換：
+5. 將 `adFixTools-firefox/` 整個資料夾壓縮為 `.xpi` 檔：
 
 ```powershell
-.\switch-browser.ps1 -Target firefox   # 切換為 Firefox manifest
-.\switch-browser.ps1 -Target chrome    # 切回 Chrome/Edge manifest
+Compress-Archive -Path adFixTools-firefox\* -DestinationPath skipads-firefox.zip -Force
+Rename-Item skipads-firefox.zip skipads-firefox.xpi -Force
 ```
 
-切換後 `manifest.json` 會改用對應的背景執行架構（Firefox 用 `background.scripts` 持久頁面，Chrome 用 `service_worker`），
-Firefox 版本會自動帶入 AMO 所需的 `browser_specific_settings`。
+或直接使用已產好的 `E:\adFixTools-firefox.xpi`（若在專案目錄內）。
+6. 在 Firefox Developer Edition 網址列輸入 `about:addons`
+7. 點選齒輪圖示 → **「從檔案安裝附加元件」** → 選取 `.xpi` 檔
+8. 確認 SkipAds 出現在列表中
 
-### Firefox 安裝步驟
+完成後就是永久安裝，關閉瀏覽器也不會消失。
 
-1. 在網址列輸入 `about:debugging#/runtime/this-firefox`
-2. 點選 **「暫時載入附加元件」**
-3. 選取 `adFixTools-firefox` 中的 `manifest.json`
-4. 確認 SkipAds 出現在列表中
+### 方式三：暫時載入（開發測試用）
+
+正式版 Firefox 也可用此方式載入，但重開瀏覽器後會消失：
+
+1. 先執行 `.\switch-browser.ps1 -Target firefox` 切換為 Firefox manifest
+2. 在網址列輸入 `about:debugging#/runtime/this-firefox`
+3. 點選 **「暫時載入附加元件」**
+4. 選取 `adFixTools-firefox` 中的 `manifest.json`
+5. 確認 SkipAds 出現在列表中
 
 ---
 
@@ -89,4 +104,8 @@ Firefox 版本會自動帶入 AMO 所需的 `browser_specific_settings`。
 
 ## 解除安裝
 
-`edge://extensions` → 找到 SkipAds → 點選 **「移除」**。
+**Edge / Chrome：** `edge://extensions` 或 `chrome://extensions` → 找到 SkipAds → 點選 **「移除」**。
+
+**Firefox（AMO 安裝）：** `about:addons` → 找到 SkipAds → 點選 **「移除」**。
+
+**Firefox（Developer Edition 手動安裝）：** 同上，從 `about:addons` 移除。
