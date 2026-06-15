@@ -1,5 +1,5 @@
 const $ = (id) => document.getElementById(id);
-const i18n = (key) => chrome.i18n.getMessage(key);
+const i18n = (key, substitutions) => chrome.i18n.getMessage(key, substitutions);
 
 document.title = i18n('opts_title');
 $('title').textContent = i18n('opts_title');
@@ -35,6 +35,20 @@ $('lbl_statsHistoryTitle').textContent = i18n('opts_statsHistoryTitle');
 $('btn_clearStats').textContent = i18n('opts_statsClear');
 $('lbl_theme').textContent = i18n('opts_theme');
 $('desc_theme').textContent = i18n('opts_themeDesc');
+$('collapseCooldown5').textContent = i18n('opts_seconds', '5');
+$('collapseCooldown10').textContent = i18n('opts_seconds', '10');
+$('collapseCooldown15').textContent = i18n('opts_seconds', '15');
+$('collapseCooldown30').textContent = i18n('opts_seconds', '30');
+$('collapseCooldown60').textContent = i18n('opts_seconds', '60');
+$('collapseCooldown0').textContent = i18n('opts_cooldownNoPause');
+$('hideChatCooldown5').textContent = i18n('opts_seconds', '5');
+$('hideChatCooldown10').textContent = i18n('opts_seconds', '10');
+$('hideChatCooldown30').textContent = i18n('opts_seconds', '30');
+$('hideChatCooldown60').textContent = i18n('opts_minutes', '1');
+$('hideChatCooldown0').textContent = i18n('opts_chatCooldownNever');
+$('themeSystem').textContent = i18n('opts_themeSystem');
+$('themeLight').textContent = i18n('opts_themeLight');
+$('themeDark').textContent = i18n('opts_themeDark');
 
 const KEY = ['speed','muteAd','showNotification','blockHomeAds','collapsePanelAds','collapseCooldown','incrementalSpeed','debugMode','hideChat','hideChatCooldown','enabled','theme','playerSelector','adsSelectors','skipBtnSelector'];
 const el = (id) => document.getElementById(id);
@@ -45,7 +59,7 @@ chrome.storage.local.get(KEY, (d) => {
   el('showNotification').checked = d.showNotification !== false;
   el('blockHomeAds').checked = d.blockHomeAds !== false;
   el('collapsePanelAds').checked = d.collapsePanelAds !== false;
-  el('collapseCooldown').value = d.collapseCooldown || 15;
+  el('collapseCooldown').value = d.collapseCooldown ?? 15;
   el('incrementalSpeed').checked = d.incrementalSpeed === true;
   el('debugMode').checked = d.debugMode === true;
   el('hideChat').checked = d.hideChat === true;
@@ -82,17 +96,30 @@ function formatTime(seconds) {
 
 function renderHistory(history) {
   const container = $('statsHistory');
+  container.textContent = '';
   if (!history.length) {
     container.textContent = i18n('opts_statsHistoryEmpty');
     return;
   }
-  container.innerHTML = history.map(h => `
-    <div style="padding:6px 0;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center">
-      <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.title}</div>
-      <div style="margin-left:12px;font-variant-numeric:tabular-nums">${formatTime(h.timeSaved)}</div>
-      <div style="margin-left:12px;color:#999;font-size:11px">${new Date(h.timestamp).toLocaleString()}</div>
-    </div>
-  `).join('');
+  history.forEach((h) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'padding:6px 0;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center';
+
+    const title = document.createElement('div');
+    title.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    title.textContent = h.title || 'Unknown ad';
+
+    const timeSaved = document.createElement('div');
+    timeSaved.style.cssText = 'margin-left:12px;font-variant-numeric:tabular-nums';
+    timeSaved.textContent = formatTime(h.timeSaved || 0);
+
+    const timestamp = document.createElement('div');
+    timestamp.style.cssText = 'margin-left:12px;color:#999;font-size:11px';
+    timestamp.textContent = h.timestamp ? new Date(h.timestamp).toLocaleString() : '';
+
+    row.append(title, timeSaved, timestamp);
+    container.appendChild(row);
+  });
 }
 
 $('btn_clearStats').onclick = () => {

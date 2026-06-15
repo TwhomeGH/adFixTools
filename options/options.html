@@ -113,10 +113,12 @@ input[type=checkbox]{width:18px;height:18px;accent-color:#AB5A5A}
   <div class="row">
     <div><label id="lbl_collapseCd"></label><div class="desc" id="desc_collapseCd"></div></div>
     <select id="collapseCooldown">
-      <option value="5">5s</option><option value="10">10s</option>
-      <option value="15" selected>15s</option>
-      <option value="30">30s</option><option value="60">60s</option>
-      <option value="0">不休</option>
+      <option id="collapseCooldown5" value="5">5s</option>
+      <option id="collapseCooldown10" value="10">10s</option>
+      <option id="collapseCooldown15" value="15" selected>15s</option>
+      <option id="collapseCooldown30" value="30">30s</option>
+      <option id="collapseCooldown60" value="60">60s</option>
+      <option id="collapseCooldown0" value="0">No pause</option>
     </select>
   </div>
   <div class="row">
@@ -126,11 +128,11 @@ input[type=checkbox]{width:18px;height:18px;accent-color:#AB5A5A}
   <div class="row">
     <div><label id="lbl_hideChatCd"></label><div class="desc" id="desc_hideChatCd"></div></div>
     <select id="hideChatCooldown">
-      <option value="5">5 秒</option>
-      <option value="10">10 秒</option>
-      <option value="30">30 秒</option>
-      <option value="60">1 分鐘</option>
-      <option value="0" selected>不自動恢復</option>
+      <option id="hideChatCooldown5" value="5">5s</option>
+      <option id="hideChatCooldown10" value="10">10s</option>
+      <option id="hideChatCooldown30" value="30">30s</option>
+      <option id="hideChatCooldown60" value="60">1m</option>
+      <option id="hideChatCooldown0" value="0" selected>Never resume</option>
     </select>
   </div>
   <div class="row">
@@ -144,9 +146,9 @@ input[type=checkbox]{width:18px;height:18px;accent-color:#AB5A5A}
   <div class="row">
     <div><label id="lbl_theme"></label><div class="desc" id="desc_theme"></div></div>
     <select id="theme">
-      <option value="system">系統</option>
-      <option value="light">淺色</option>
-      <option value="dark">深色</option>
+      <option id="themeSystem" value="system">System</option>
+      <option id="themeLight" value="light">Light</option>
+      <option id="themeDark" value="dark">Dark</option>
     </select>
   </div>
 </div>
