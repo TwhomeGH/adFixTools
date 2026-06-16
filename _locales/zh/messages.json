@@ -1,6 +1,6 @@
 {
     "name":             { "message": "SkipAds - YouTube 廣告跳過" },
-    "description":      { "message": "自動跳過 YouTube 廣告，支援自訂加速速度與首頁廣告封鎖" },
+    "description":      { "message": "YouTube 廣告加速與紀錄工具，自動偵測廣告資訊、加速播放，保留廣告完整曝光" },
     "toggleDesc":       { "message": "開關廣告跳過功能" },
     "opts_title":       { "message": "設定" },
     "opts_speed":       { "message": "廣告速度" },

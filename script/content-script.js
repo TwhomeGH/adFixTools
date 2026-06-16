@@ -13,6 +13,8 @@
     let lastPrintedAd = '';
     let adOriginalMuted = false;
     let adOriginalMutedSaved = false;
+    let lastAdSpeedChange = 0;
+    let currentAdSpeed = 1;
     const panelCooldowns = new Map();
     const MAX_STATS_HISTORY = 50;
     let currentVideo = null;
@@ -520,12 +522,37 @@
                     }
                 }
             }
-            if (opts.incrementalSpeed) {
-                const elapsed = (Date.now() - adStartTime) / 1000;
-                v.playbackRate = calcIncrementalSpeed(elapsed);
-            } else {
-                v.playbackRate = opts.speed || 2;
+            const now = Date.now();
+            const maxSpeed = opts.speed || 2;
+            if (now - lastAdSpeedChange > 2000 + Math.random() * 4000) {
+                lastAdSpeedChange = now;
+                if (opts.incrementalSpeed) {
+                    const elapsed = (now - adStartTime) / 1000;
+                    const base = calcIncrementalSpeed(elapsed);
+                    const r = Math.random();
+                    if (r < 0.2) {
+                        currentAdSpeed = 1;
+                    } else if (r < 0.35) {
+                        currentAdSpeed = Math.max(1, base * (0.5 + Math.random() * 0.5));
+                    } else {
+                        currentAdSpeed = base * (0.8 + Math.random() * 0.4);
+                    }
+                    currentAdSpeed = Math.min(16, Math.max(1, Math.round(currentAdSpeed * 2) / 2));
+                } else {
+                    const speeds = [1, 1.5, 2, 3, 4].filter(s => s <= maxSpeed);
+                    const r = Math.random();
+                    if (r < 0.15) {
+                        currentAdSpeed = 1;
+                    } else if (r < 0.4) {
+                        currentAdSpeed = speeds[Math.floor(Math.random() * speeds.length)] || 1;
+                    } else {
+                        currentAdSpeed = maxSpeed * (0.6 + Math.random() * 0.4);
+                        currentAdSpeed = Math.max(1, Math.min(maxSpeed, Math.round(currentAdSpeed * 2) / 2));
+                    }
+                }
+                if (opts.debugMode) debug('Ad speed changed to', currentAdSpeed);
             }
+            v.playbackRate = currentAdSpeed;
             if (opts.muteAd !== false) {
                 debug('Muting ad video, current muted:', v.muted);
                 v.muted = true;
@@ -634,6 +661,8 @@
                 inspectedAd = false;
                 lastPrintedAd = '';
                 adOriginalMutedSaved = false;
+                currentAdSpeed = 1;
+                lastAdSpeedChange = 0;
                 if (muteEnforcer) { clearInterval(muteEnforcer); muteEnforcer = null; }
                 if (v) { v.playbackRate = 1; v.muted = adOriginalMuted; }
             }
@@ -908,6 +937,8 @@
         if ('enabled' in changes && !changes.enabled.newValue) {
             wasAd = false;
             adOriginalMutedSaved = false;
+            currentAdSpeed = 1;
+            lastAdSpeedChange = 0;
             updateAdOverlay('');
             if (muteEnforcer) { clearInterval(muteEnforcer); muteEnforcer = null; }
             const v = document.querySelector('#movie_player video');

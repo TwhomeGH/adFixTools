@@ -1,6 +1,6 @@
 {
     "name":             { "message": "SkipAds - YouTube Ad Skipper" },
-    "description":      { "message": "Automatically skips YouTube ads with customizable speed and homepage ad blocking" },
+    "description":      { "message": "YouTube ad accelerator & logger - detects ads, speeds them up, records ad data without blocking" },
     "toggleDesc":       { "message": "Toggle ad skipping on/off" },
     "opts_title":       { "message": "Settings" },
     "opts_speed":       { "message": "Ad speed" },
