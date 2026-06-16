@@ -1,4 +1,4 @@
-# SkipAds — YouTube Ad Skipper
+# SkipAds — YouTube Ad Speed Record Tool
 
 <p align="center">
   <img src="docs/adInfo3.png" alt="設定頁面" width="45%">
@@ -6,7 +6,13 @@
   <img src="docs/adInfo4.png" alt="統計資訊" width="45%">
 </p>
 
-輕量級 Edge 擴充功能，自動跳過 YouTube 廣告，支援加速、靜音、首頁廣告封鎖。
+![商品首頁統計展示信息](Docs/adInfo5.png)
+
+
+SkipAds — YouTube 廣告加速與紀錄工具
+
+SkipAds 是一款輕量級 YouTube 廣告加速擴充功能。不同於傳統廣告攔截器，SkipAds 讓廣告可以完整播放（不阻擋曝光），但透過加速與隨機速度變化減少等待時間，同時自動記錄廣告資訊供日後參考。
+
 
 ## 理念
 
