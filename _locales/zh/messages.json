@@ -30,7 +30,7 @@
     "opts_debug":       { "message": "除錯模式" },
     "opts_debugDesc":   { "message": "將廣告 DOM 資訊輸出至主控台，方便排錯" },
     "opts_skipBtnClick":     { "message": "自動點擊略過按鈕" },
-    "opts_skipBtnClickDesc": { "message": "自動點擊廣告的「略過」按鈕；關閉後僅加速與靜音廣告（關閉可避免被 YouTube 偵測）" },
+    "opts_skipBtnClickDesc": { "message": "自動點擊廣告的「略過」按鈕（預設關閉）；開啟後請注意可能被 YouTube 偵測為 adblock" },
     "opts_enabled":     { "message": "啟用" },
     "opts_enabledDesc": { "message": "快捷鍵：Ctrl+Shift+X 切換開關" },
     "opts_save":        { "message": "儲存" },

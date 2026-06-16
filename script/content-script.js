@@ -1,7 +1,7 @@
 (() => {
     'use strict';
 
-    let opts = { speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, collapseCooldown: 15, incrementalSpeed: false, enabled: true, skipBtnClick: true, debugMode: false, hideChat: false, hideFeaturedProduct: true };
+    let opts = { speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, collapseCooldown: 15, incrementalSpeed: false, enabled: true, skipBtnClick: false, debugMode: false, hideChat: false, hideFeaturedProduct: true };
     let wasAd = false;
     let lastSkip = 0;
     let toastEl = null;
@@ -812,7 +812,7 @@
     }, true);
 
     chrome.storage.local.get({
-        speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, collapseCooldown: 15, incrementalSpeed: false, enabled: true, skipBtnClick: true, debugMode: false, hideChat: false, hideChatCooldown: 0, hideFeaturedProduct: true
+        speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, collapseCooldown: 15, incrementalSpeed: false, enabled: true, skipBtnClick: false, debugMode: false, hideChat: false, hideChatCooldown: 0, hideFeaturedProduct: true
     }, (d) => {
         opts = d;
         if (opts.hideFeaturedProduct) {

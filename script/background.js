@@ -7,7 +7,7 @@ const DEFAULTS = {
     collapseCooldown: 15,
     incrementalSpeed: false,
     enabled: true,
-    skipBtnClick: true,
+    skipBtnClick: false,
     debugMode: false,
     hideChat: false,
     hideChatCooldown: 0,

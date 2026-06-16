@@ -73,7 +73,7 @@ chrome.storage.local.get(KEY, (d) => {
   el('hideChat').checked = d.hideChat === true;
   el('hideChatCooldown').value = d.hideChatCooldown || 0;
   el('hideFeaturedProduct').checked = d.hideFeaturedProduct !== false;
-  el('skipBtnClick').checked = d.skipBtnClick !== false;
+  el('skipBtnClick').checked = d.skipBtnClick === true;
   el('enabled').checked = d.enabled !== false;
   el('theme').value = d.theme || 'system';
   applyTheme(d.theme || 'system');
