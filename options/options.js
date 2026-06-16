@@ -25,6 +25,8 @@ $('lbl_hideChatCd').textContent = i18n('opts_hideChatCd');
 $('desc_hideChatCd').textContent = i18n('opts_hideChatCdDesc');
 $('lbl_debug').textContent = i18n('opts_debug');
 $('desc_debug').textContent = i18n('opts_debugDesc');
+$('lbl_skipBtnClick').textContent = i18n('opts_skipBtnClick');
+$('desc_skipBtnClick').textContent = i18n('opts_skipBtnClickDesc');
 $('lbl_enabled').textContent = i18n('opts_enabled');
 $('desc_enabled').textContent = i18n('opts_enabledDesc');
 $('save').textContent = i18n('opts_save');
@@ -56,7 +58,7 @@ $('themeSystem').textContent = i18n('opts_themeSystem');
 $('themeLight').textContent = i18n('opts_themeLight');
 $('themeDark').textContent = i18n('opts_themeDark');
 
-const KEY = ['speed','muteAd','showNotification','blockHomeAds','collapsePanelAds','collapseCooldown','incrementalSpeed','debugMode','hideChat','hideChatCooldown','hideFeaturedProduct','enabled','theme','playerSelector','adsSelectors','skipBtnSelector'];
+const KEY = ['speed','muteAd','showNotification','blockHomeAds','collapsePanelAds','collapseCooldown','incrementalSpeed','debugMode','hideChat','hideChatCooldown','hideFeaturedProduct','skipBtnClick','enabled','theme','playerSelector','adsSelectors','skipBtnSelector'];
 const el = (id) => document.getElementById(id);
 
 chrome.storage.local.get(KEY, (d) => {
@@ -71,6 +73,7 @@ chrome.storage.local.get(KEY, (d) => {
   el('hideChat').checked = d.hideChat === true;
   el('hideChatCooldown').value = d.hideChatCooldown || 0;
   el('hideFeaturedProduct').checked = d.hideFeaturedProduct !== false;
+  el('skipBtnClick').checked = d.skipBtnClick !== false;
   el('enabled').checked = d.enabled !== false;
   el('theme').value = d.theme || 'system';
   applyTheme(d.theme || 'system');
@@ -247,6 +250,7 @@ el('save').onclick = () => {
     hideChat: el('hideChat').checked,
     hideChatCooldown: parseInt(el('hideChatCooldown').value, 10),
     hideFeaturedProduct: el('hideFeaturedProduct').checked,
+    skipBtnClick: el('skipBtnClick').checked,
     enabled: el('enabled').checked,
     theme: el('theme').value
   }, () => {

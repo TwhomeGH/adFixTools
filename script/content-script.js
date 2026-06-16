@@ -1,7 +1,7 @@
 (() => {
     'use strict';
 
-    let opts = { speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, collapseCooldown: 15, incrementalSpeed: false, enabled: true, debugMode: false, hideChat: false, hideFeaturedProduct: true };
+    let opts = { speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, collapseCooldown: 15, incrementalSpeed: false, enabled: true, skipBtnClick: true, debugMode: false, hideChat: false, hideFeaturedProduct: true };
     let wasAd = false;
     let lastSkip = 0;
     let toastEl = null;
@@ -540,69 +540,40 @@
             }
             wasAd = true;
 
-            const skipBtn = findSkipBtn();
-            if (skipBtn) {
-                debugLogBtn('findSkipBtn result', skipBtn);
-                const now = Date.now();
-                if (now - lastSkipBtnClick < 3000) {
-                    debug('Skip button click throttled');
-                } else {
-                    lastSkipBtnClick = now;
-                    const btn = skipBtn.querySelector('button') || skipBtn;
-                    let rect = skipBtn.getBoundingClientRect();
-                    let retries = 0;
-                    while ((rect.width === 0 || rect.height === 0) && retries < 10) {
-                        await new Promise(r => setTimeout(r, 50));
-                        rect = skipBtn.getBoundingClientRect();
-                        retries++;
-                    }
-                    if (rect.width === 0 || rect.height === 0) {
-                        debug('Skip button not rendered after retries, trying trustedClick anyway');
-                        btn.focus();
-                        trustedClick(btn);
-                    } else {
-                        btn.focus();
-                        trustedClick(btn);
-                    }
-                }
-                if (v.duration > 0 && v.currentTime < v.duration - 1) {
-                    v.currentTime = v.duration - 0.5;
-                }
-                if (Date.now() - lastSkip > 2000) {
-                    lastSkip = Date.now();
-                    const title = adTitle || getAdInfo();
-                    console.log('[SkipAds] Skipped, title:', title);
-                    showToast(title);
-                    recordSkipStats(title, v, adUrl);
-                    if (muteEnforcer) { clearInterval(muteEnforcer); muteEnforcer = null; }
-                    if (v) { v.playbackRate = 1; v.muted = adOriginalMuted; }
-                    wasAd = false;
-                    adTitle = '';
-                    adUrl = '';
-                    inspectedAd = false;
-                    lastPrintedAd = '';
-                    adOriginalMutedSaved = false;
-                }
-            } else {
-                if (opts.debugMode && !inspectedAd) {
-                    inspectedAd = true;
-                    debug('No skip button found. Trying to force end ad...');
-                    inspectAd();
-                }
-                if (v && v.duration > 0 && v.currentTime < v.duration - 0.5) {
-                    v.currentTime = v.duration - 0.5;
-                }
-                const hiddenBtn = document.querySelector('.ytp-ad-skip-button-modern, .ytp-ad-skip-button-slot button, .ytp-video-interstitial-buttoned-centered-layout button');
-                if (hiddenBtn) {
-                    debugLogBtn('hidden skip btn', hiddenBtn);
+            if (opts.skipBtnClick !== false) {
+                const skipBtn = findSkipBtn();
+                if (skipBtn) {
+                    debugLogBtn('findSkipBtn result', skipBtn);
                     const now = Date.now();
                     if (now - lastSkipBtnClick < 3000) {
-                        debug('Hidden skip button click throttled');
+                        debug('Skip button click throttled');
                     } else {
                         lastSkipBtnClick = now;
-                        const btn = hiddenBtn.querySelector('button') || hiddenBtn;
-                        trustedClick(btn);
+                        const btn = skipBtn.querySelector('button') || skipBtn;
+                        let rect = skipBtn.getBoundingClientRect();
+                        let retries = 0;
+                        while ((rect.width === 0 || rect.height === 0) && retries < 10) {
+                            await new Promise(r => setTimeout(r, 50));
+                            rect = skipBtn.getBoundingClientRect();
+                            retries++;
+                        }
+                        if (rect.width === 0 || rect.height === 0) {
+                            debug('Skip button not rendered after retries, trying trustedClick anyway');
+                            btn.focus();
+                            trustedClick(btn);
+                        } else {
+                            btn.focus();
+                            trustedClick(btn);
+                        }
+                    }
+                    if (v.duration > 0 && v.currentTime < v.duration - 1) {
+                        v.currentTime = v.duration - 0.5;
+                    }
+                    if (Date.now() - lastSkip > 2000) {
+                        lastSkip = Date.now();
                         const title = adTitle || getAdInfo();
+                        console.log('[SkipAds] Skipped, title:', title);
+                        showToast(title);
                         recordSkipStats(title, v, adUrl);
                         if (muteEnforcer) { clearInterval(muteEnforcer); muteEnforcer = null; }
                         if (v) { v.playbackRate = 1; v.muted = adOriginalMuted; }
@@ -614,7 +585,38 @@
                         adOriginalMutedSaved = false;
                     }
                 } else {
-                    debug('No hidden skip button found either');
+                    if (opts.debugMode && !inspectedAd) {
+                        inspectedAd = true;
+                        debug('No skip button found. Trying to force end ad...');
+                        inspectAd();
+                    }
+                    if (v && v.duration > 0 && v.currentTime < v.duration - 0.5) {
+                        v.currentTime = v.duration - 0.5;
+                    }
+                    const hiddenBtn = document.querySelector('.ytp-ad-skip-button-modern, .ytp-ad-skip-button-slot button, .ytp-video-interstitial-buttoned-centered-layout button');
+                    if (hiddenBtn) {
+                        debugLogBtn('hidden skip btn', hiddenBtn);
+                        const now = Date.now();
+                        if (now - lastSkipBtnClick < 3000) {
+                            debug('Hidden skip button click throttled');
+                        } else {
+                            lastSkipBtnClick = now;
+                            const btn = hiddenBtn.querySelector('button') || hiddenBtn;
+                            trustedClick(btn);
+                            const title = adTitle || getAdInfo();
+                            recordSkipStats(title, v, adUrl);
+                            if (muteEnforcer) { clearInterval(muteEnforcer); muteEnforcer = null; }
+                            if (v) { v.playbackRate = 1; v.muted = adOriginalMuted; }
+                            wasAd = false;
+                            adTitle = '';
+                            adUrl = '';
+                            inspectedAd = false;
+                            lastPrintedAd = '';
+                            adOriginalMutedSaved = false;
+                        }
+                    } else {
+                        debug('No hidden skip button found either');
+                    }
                 }
             }
         }
@@ -810,7 +812,7 @@
     }, true);
 
     chrome.storage.local.get({
-        speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, collapseCooldown: 15, incrementalSpeed: false, enabled: true, debugMode: false, hideChat: false, hideChatCooldown: 0, hideFeaturedProduct: true
+        speed: 2, muteAd: true, showNotification: true, blockHomeAds: true, collapsePanelAds: true, collapseCooldown: 15, incrementalSpeed: false, enabled: true, skipBtnClick: true, debugMode: false, hideChat: false, hideChatCooldown: 0, hideFeaturedProduct: true
     }, (d) => {
         opts = d;
         if (opts.hideFeaturedProduct) {

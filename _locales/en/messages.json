@@ -29,6 +29,8 @@
     "opts_hideChatCdDesc":{ "message": "Time before auto-hide resumes after user manually opens chat (0 = never resume)" },
     "opts_debug":       { "message": "Debug mode" },
     "opts_debugDesc":   { "message": "Log ad DOM details to console for troubleshooting" },
+    "opts_skipBtnClick":     { "message": "Auto-click skip button" },
+    "opts_skipBtnClickDesc": { "message": "Automatically click the ad skip button; when off, ads are only sped up and muted (disable to avoid YouTube detection)" },
     "opts_enabled":     { "message": "Enabled" },
     "opts_enabledDesc": { "message": "Keyboard: Ctrl+Shift+X to toggle" },
     "opts_save":        { "message": "Save" },
