@@ -765,6 +765,67 @@
             });
         } catch (e) {}
     };
+    const MAX_HOME_AD_HISTORY = 50;
+    const HOME_AD_SELS = [
+        'ytd-display-ad-renderer', 'ytd-statement-banner-renderer', 'ytd-ad-slot-renderer',
+        'ytd-promoted-sparkles-web-renderer', 'ytd-compact-promoted-video-renderer',
+        'ytd-in-feed-ad-layout-renderer', '#masthead-ad', 'ytd-merch-shelf-renderer',
+        'ytd-promoted-video-renderer', 'ytd-video-masthead-ad-v3-renderer'
+    ];
+    const recordedHomeAds = new Set();
+    const getHomeAdInfo = (el) => {
+        const textParts = [];
+        const linkEl = el.querySelector('a[href*="googleadservices"]');
+        const url = linkEl ? linkEl.href : '';
+        const metadata = el.querySelector('feed-ad-metadata-view-model');
+        if (metadata) {
+            const headlineLinks = metadata.querySelectorAll('.ytAttributedStringLink');
+            for (const a of headlineLinks) {
+                const t = a.textContent.trim();
+                if (t) textParts.push(t);
+            }
+            const detailLine = metadata.querySelector('ad-details-line-view-model');
+            if (detailLine) {
+                const t = detailLine.textContent.trim();
+                if (t) textParts.push(`[${t}]`);
+            }
+        }
+        if (!textParts.length) {
+            const allText = el.textContent.replace(/\s+/g, ' ').trim().slice(0, 200);
+            if (allText) textParts.push(allText);
+        }
+        return { text: textParts.join(' · ') || '(empty ad)', url };
+    };
+    const recordHomeAd = (info) => {
+        try { if (!chrome.runtime?.id) return; } catch (e) { return; }
+        const { text, url } = info;
+        if (!text) return;
+        const key = text + url;
+        if (recordedHomeAds.has(key)) return;
+        recordedHomeAds.add(key);
+        try {
+            chrome.storage.local.get(['homeAdStats'], (data) => {
+                const stats = data.homeAdStats || { totalSeen: 0, history: [] };
+                stats.totalSeen += 1;
+                const entry = { text, url, timestamp: Date.now() };
+                stats.history.unshift(entry);
+                if (stats.history.length > MAX_HOME_AD_HISTORY) {
+                    stats.history = stats.history.slice(0, MAX_HOME_AD_HISTORY);
+                }
+                try { chrome.storage.local.set({ homeAdStats: stats }); } catch (e) {}
+            });
+        } catch (e) {}
+    };
+    const scanHomeAds = () => {
+        if (!opts.blockHomeAds) return;
+        const joined = HOME_AD_SELS.join(',');
+        document.querySelectorAll(joined).forEach(el => {
+            if (el.offsetParent !== null) return;
+            const info = getHomeAdInfo(el);
+            recordHomeAd(info);
+        });
+    };
+
     let fpStyleInjected = false;
     const collapseFeaturedProduct = () => {
         if (!opts.hideFeaturedProduct) return;
@@ -789,6 +850,7 @@
     setInterval(() => {
         collapseAdPanels();
         collapseFeaturedProduct();
+        scanHomeAds();
         checkVideo();
     }, 2000);
 
@@ -819,7 +881,14 @@
             collapseFeaturedProduct();
         }
         if (opts.blockHomeAds) {
-            const w = () => { document.head ? injectAdBlockStyle() : setTimeout(w, 100); };
+            const w = () => {
+                if (document.head) {
+                    injectAdBlockStyle();
+                    setTimeout(scanHomeAds, 500);
+                } else {
+                    setTimeout(w, 100);
+                }
+            };
             w();
         }
         watchChat();

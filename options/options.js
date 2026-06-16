@@ -41,6 +41,10 @@ $('lbl_fpStatsTitle').textContent = i18n('opts_fpStatsTitle');
 $('lbl_fpStatsTotalSeen').textContent = i18n('opts_fpStatsTotalSeen');
 $('lbl_fpStatsHistoryTitle').textContent = i18n('opts_fpStatsHistoryTitle');
 $('btn_clearFpStats').textContent = i18n('opts_statsClear');
+$('lbl_homeAdStatsTitle').textContent = i18n('opts_homeAdStatsTitle');
+$('lbl_homeAdStatsTotalSeen').textContent = i18n('opts_homeAdStatsTotalSeen');
+$('lbl_homeAdStatsHistoryTitle').textContent = i18n('opts_homeAdStatsHistoryTitle');
+$('btn_clearHomeAdStats').textContent = i18n('opts_statsClear');
 $('lbl_theme').textContent = i18n('opts_theme');
 $('desc_theme').textContent = i18n('opts_themeDesc');
 $('collapseCooldown5').textContent = i18n('opts_seconds', '5');
@@ -234,8 +238,69 @@ $('btn_clearFpStats').onclick = () => {
   }
 };
 
+function loadHomeAdStats() {
+  chrome.storage.local.get('homeAdStats', (data) => {
+    const stats = data.homeAdStats || { totalSeen: 0, history: [] };
+    $('stat_homeAdTotalSeen').textContent = stats.totalSeen;
+    renderHomeAdHistory(stats.history);
+  });
+}
+
+function renderHomeAdHistory(history) {
+  const container = $('homeAdStatsHistory');
+  container.textContent = '';
+  if (!history.length) {
+    container.textContent = i18n('opts_statsHistoryEmpty');
+    return;
+  }
+  history.forEach((h) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'padding:6px 0;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center';
+
+    const left = document.createElement('div');
+    left.style.cssText = 'flex:1;overflow:hidden;display:flex;flex-direction:column;min-width:0';
+
+    const text = document.createElement('div');
+    text.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer';
+    text.textContent = h.text || 'Unknown';
+    text.title = h.text || 'Unknown';
+    text.onclick = () => {
+      const expanded = text.style.whiteSpace !== 'normal';
+      text.style.whiteSpace = expanded ? 'normal' : 'nowrap';
+      text.style.textOverflow = expanded ? 'clip' : 'ellipsis';
+      text.style.overflow = expanded ? 'visible' : 'hidden';
+    };
+    left.appendChild(text);
+
+    if (h.url) {
+      const link = document.createElement('a');
+      link.textContent = h.url;
+      link.href = h.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.style.cssText = 'font-size:11px;color:var(--stat-color);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block';
+      link.title = h.url;
+      left.appendChild(link);
+    }
+
+    const timestamp = document.createElement('div');
+    timestamp.style.cssText = 'margin-left:12px;color:#999;font-size:11px;flex-shrink:0';
+    timestamp.textContent = h.timestamp ? new Date(h.timestamp).toLocaleString() : '';
+
+    row.append(left, timestamp);
+    container.appendChild(row);
+  });
+}
+
+$('btn_clearHomeAdStats').onclick = () => {
+  if (confirm(i18n('opts_homeAdStatsClearConfirm'))) {
+    chrome.storage.local.set({ homeAdStats: { totalSeen: 0, history: [] } }, loadHomeAdStats);
+  }
+};
+
 loadStats();
 loadFpStats();
+loadHomeAdStats();
 
 el('save').onclick = () => {
   chrome.storage.local.set({

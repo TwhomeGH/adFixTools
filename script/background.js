@@ -13,6 +13,7 @@ const DEFAULTS = {
     hideChatCooldown: 0,
     theme: 'system',
     skipStats: { totalSkips: 0, totalTimeSaved: 0, history: [] },
+    homeAdStats: { totalSeen: 0, history: [] },
     playerSelector: '#movie_player',
     adsSelectors: ['ad-showing', 'ad-interrupting'],
     skipBtnSelector: '.ytp-ad-skip-button-modern.ytp-button,.ytp-skip-ad-button',
