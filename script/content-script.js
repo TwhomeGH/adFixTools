@@ -306,6 +306,16 @@
         if (link) {
             const href = link.getAttribute('href');
             if (href && (href.startsWith('http') || href.startsWith('//'))) return href;
+            if (href && href.startsWith('/')) return 'https://www.youtube.com' + href;
+        }
+        const root = document.querySelector(containers);
+        if (root) {
+            for (const el of root.querySelectorAll('*')) {
+                for (const attr of el.attributes) {
+                    const v = attr.value;
+                    if (v && /^https?:\/\/(?:www\.)?youtube\.com\//.test(v)) return v;
+                }
+            }
         }
         for (const sel of ['.ytp-ad-destination', '.ytp-ad-avatar-lockup-card__description', '.ytp-ad-details-line__text--style-responsive']) {
             const el = document.querySelector(sel);
@@ -313,7 +323,9 @@
                 const text = el.textContent.trim();
                 if (text) {
                     if (text.startsWith('http')) return text;
-                    return `https://${text.replace(/^https?:\/\//, '')}`;
+                    let fixed = text.replace(/^https?:\/\//, '');
+                    if (/^youtube\.com\//i.test(fixed)) fixed = 'www.' + fixed;
+                    return `https://${encodeURI(fixed)}`;
                 }
             }
         }
