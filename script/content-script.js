@@ -803,6 +803,7 @@
     ];
     const recordedHomeAds = new Set();
     const getHomeAdInfo = (el) => {
+        const seen = new Set();
         const textParts = [];
         const linkEl = el.querySelector('a[href*="googleadservices"]');
         const url = linkEl ? linkEl.href : '';
@@ -811,7 +812,7 @@
             const headlineLinks = metadata.querySelectorAll('.ytAttributedStringLink');
             for (const a of headlineLinks) {
                 const t = a.textContent.trim();
-                if (t) textParts.push(t);
+                if (t && !seen.has(t)) { seen.add(t); textParts.push(t); }
             }
             const detailLine = metadata.querySelector('ad-details-line-view-model');
             if (detailLine) {
