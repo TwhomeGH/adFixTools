@@ -30,7 +30,7 @@
         }
     ],
     "background": {
-        "service_worker": ["script/background.js"]
+        "service_worker": "script/background.js"
     },
     "action": {},
     "options_ui": {
