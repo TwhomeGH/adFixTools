@@ -45,7 +45,7 @@ edge://extensions
 
 SkipAds 已在 Firefox 附加元件商店（AMO）上架中。上架完成後，你可以在 Firefox 的附加元件管理員搜尋 **"SkipAds"** 或直接前往商店頁面安裝，安裝後會自動永久保留，重開 Firefox 也不會消失。
 
-🔗 商店連結：（上架後補上）
+🔗 商店連結：[（上架後補上）](https://addons.mozilla.org/zh-TW/firefox/addon/skipads-youtube-ad-speed/)
 
 ### 方式二：使用 Firefox Developer Edition（手動永久安裝）
 
