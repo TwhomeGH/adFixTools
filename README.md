@@ -6,7 +6,7 @@
   <img src="docs/adInfo4.png" alt="統計資訊" width="45%">
 </p>
 
-![商品首頁統計展示信息](Docs/adInfo5.png)
+![商品首頁統計展示信息](docs/adInfo5.png)
 
 
 SkipAds — YouTube 廣告加速與紀錄工具
