@@ -29,6 +29,7 @@
         void document.documentElement.offsetHeight;
     };
     const setChatHide = (on) => {
+        if (location.hostname === 'studio.youtube.com') return;
         const all = document.querySelectorAll(CHAT_CONTAINER_SEL);
         if (!all.length) return;
         for (const el of all) {
